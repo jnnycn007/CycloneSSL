@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -239,9 +239,7 @@ error_t tlsGenerateRandomValue(TlsContext *context, uint8_t *random)
             osMemcpy(random + 24, tls11DowngradeRandom, 8);
          }
          else if(context->version == TLS_VERSION_1_2 &&
-            context->versionMax >= TLS_VERSION_1_3 &&
-            (context->transportProtocol == TLS_TRANSPORT_PROTOCOL_STREAM ||
-            context->transportProtocol == TLS_TRANSPORT_PROTOCOL_EAP))
+            context->versionMax >= TLS_VERSION_1_3)
          {
             //If negotiating TLS 1.2, TLS 1.3 servers must set the last eight
             //bytes of their random value to the bytes 44 4F 57 4E 47 52 44 01
@@ -693,9 +691,44 @@ __weak_func error_t tlsInitEncryptionEngine(TlsContext *context,
    osMemset(&encryptionEngine->seqNum, 0, sizeof(TlsSequenceNumber));
 
 #if (DTLS_SUPPORT == ENABLED)
-   //The epoch number is initially zero and is incremented each time a
-   //ChangeCipherSpec message is sent
-   encryptionEngine->epoch++;
+   //DTLS 1.3 protocol?
+   if(context->transportProtocol == TLS_TRANSPORT_PROTOCOL_DATAGRAM &&
+      context->version == TLS_VERSION_1_3)
+   {
+      //This version of DTLS assigns dedicated epoch values to messages in the
+      //protocol exchange to allow identification of the correct cipher state
+      //(refer to RFC 9147, section 6.1)
+      if(encryptionEngine->epoch == 0 &&
+         level == TLS_ENCRYPTION_LEVEL_EARLY_DATA)
+      {
+         //Epoch value 1 is used for messages protected using keys derived from
+         //client_early_traffic_secret
+         encryptionEngine->epoch = 1;
+      }
+      else if(encryptionEngine->epoch == 0 &&
+         level == TLS_ENCRYPTION_LEVEL_HANDSHAKE)
+      {
+         //Epoch value 2 is used for messages protected using keys derived from
+         //client_handshake_traffic_secret or server_handshake_traffic_secret
+         encryptionEngine->epoch = 2;
+      }
+      else
+      {
+         //The epoch number is incremented each time keying material changes
+         encryptionEngine->epoch++;
+      }
+   }
+   else
+   {
+      //The epoch number is initially zero and is incremented each time a
+      //ChangeCipherSpec message is sent
+      encryptionEngine->epoch++;
+   }
+
+   //Implementations must not allow the epoch to wrap (refer to RFC 6347,
+   //section 4.1)
+   if(encryptionEngine->epoch == 0)
+      return ERROR_FAILURE;
 
    //Sequence numbers are maintained separately for each epoch, with each
    //sequence number initially being 0 for each epoch
@@ -754,6 +787,11 @@ __weak_func error_t tlsInitEncryptionEngine(TlsContext *context,
 #if (TLS_GCM_CIPHER_SUPPORT == ENABLED)
    //Initialize GCM context
    encryptionEngine->gcmContext = NULL;
+#endif
+
+#if (DTLS_SUPPORT == ENABLED && TLS_MAX_VERSION >= TLS_VERSION_1_3)
+   //Initialize sequence number encryption context
+   encryptionEngine->snCipherContext = NULL;
 #endif
 
 #if (TLS_MAX_VERSION >= TLS_VERSION_1_0 && TLS_MIN_VERSION <= TLS_VERSION_1_2)
@@ -820,22 +858,26 @@ __weak_func error_t tlsInitEncryptionEngine(TlsContext *context,
             secret, hashAlgo->digestSize, "key", NULL, 0,
             encryptionEngine->encKey, cipherSuite->encKeyLen);
 
-         //Debug message
-         TRACE_DEBUG("Write Key:\r\n");
-         TRACE_DEBUG_ARRAY("  ", encryptionEngine->encKey, cipherSuite->encKeyLen);
-
          //Check status code
          if(!error)
          {
+            //Debug message
+            TRACE_DEBUG("Write Key:\r\n");
+            TRACE_DEBUG_ARRAY("  ", encryptionEngine->encKey, cipherSuite->encKeyLen);
+
             //Calculate the write IV
             error = tls13HkdfExpandLabel(context->transportProtocol, hashAlgo,
                secret, hashAlgo->digestSize, "iv", NULL, 0,
                encryptionEngine->iv, cipherSuite->fixedIvLen);
          }
 
-         //Debug message
-         TRACE_DEBUG("Write IV:\r\n");
-         TRACE_DEBUG_ARRAY("  ", encryptionEngine->iv, cipherSuite->fixedIvLen);
+         //Check status code
+         if(!error)
+         {
+            //Debug message
+            TRACE_DEBUG("Write IV:\r\n");
+            TRACE_DEBUG_ARRAY("  ", encryptionEngine->iv, cipherSuite->fixedIvLen);
+         }
       }
       else
       {
@@ -915,6 +957,83 @@ __weak_func error_t tlsInitEncryptionEngine(TlsContext *context,
    }
 #endif
 
+#if (DTLS_SUPPORT == ENABLED && TLS_MAX_VERSION >= TLS_VERSION_1_3)
+   //DTLS 1.3 protocol?
+   if(context->transportProtocol == TLS_TRANSPORT_PROTOCOL_DATAGRAM &&
+      context->version == TLS_VERSION_1_3)
+   {
+      //Check status code
+      if(!error)
+      {
+         const HashAlgo *hashAlgo;
+
+         //The hash function used by HKDF is the cipher suite hash algorithm
+         hashAlgo = cipherSuite->prfHashAlgo;
+
+         //Make sure the hash algorithm is valid
+         if(hashAlgo != NULL)
+         {
+            //Calculate the sequence number encryption key (refer to RFC 9147,
+            //section 4.2.3)
+            error = tls13HkdfExpandLabel(context->transportProtocol, hashAlgo,
+               secret, hashAlgo->digestSize, "sn", NULL, 0,
+               encryptionEngine->snKey, encryptionEngine->encKeyLen);
+
+            //Check status code
+            if(!error)
+            {
+               //Debug message
+               TRACE_DEBUG("SN Key:\r\n");
+               TRACE_DEBUG_ARRAY("  ", encryptionEngine->snKey, encryptionEngine->encKeyLen);
+            }
+         }
+         else
+         {
+            //Invalid HKDF hash algorithm
+            error = ERROR_FAILURE;
+         }
+      }
+
+      //Check status code
+      if(!error)
+      {
+         //Check cipher mode of operation
+         if(encryptionEngine->cipherMode == CIPHER_MODE_CCM ||
+            encryptionEngine->cipherMode == CIPHER_MODE_GCM)
+         {
+            //Allocate encryption context
+            encryptionEngine->snCipherContext = tlsAllocMem(
+               cipherAlgo->contextSize);
+
+            //Successful memory allocation?
+            if(encryptionEngine->snCipherContext != NULL)
+            {
+               //Configure the encryption engine with the sequence number
+               //encryption key
+               error = cipherAlgo->init(encryptionEngine->snCipherContext,
+                  encryptionEngine->snKey, cipherSuite->encKeyLen);
+            }
+            else
+            {
+               //Failed to allocate memory
+               error = ERROR_OUT_OF_MEMORY;
+            }
+         }
+         else if(encryptionEngine->cipherMode == CIPHER_MODE_NULL ||
+            encryptionEngine->cipherMode == CIPHER_MODE_CHACHA20_POLY1305)
+         {
+            //No need to allocate an encryption context
+            error = NO_ERROR;
+         }
+         else
+         {
+            //Unsupported mode of operation
+            error = ERROR_FAILURE;
+         }
+      }
+   }
+#endif
+
    //Return status code
    return error;
 }
@@ -948,6 +1067,19 @@ void tlsFreeEncryptionEngine(TlsEncryptionEngine *encryptionEngine)
       //Release memory
       tlsFreeMem(encryptionEngine->gcmContext);
       encryptionEngine->gcmContext = NULL;
+   }
+#endif
+
+#if (DTLS_SUPPORT == ENABLED && TLS_MAX_VERSION >= TLS_VERSION_1_3)
+   //Valid sequence number encryption context?
+   if(encryptionEngine->snCipherContext != NULL)
+   {
+      //Erase cipher context
+      encryptionEngine->cipherAlgo->deinit(encryptionEngine->snCipherContext);
+
+      //Release memory
+      tlsFreeMem(encryptionEngine->snCipherContext);
+      encryptionEngine->snCipherContext = NULL;
    }
 #endif
 
@@ -1560,7 +1692,7 @@ size_t tlsComputeEncryptionOverhead(TlsEncryptionEngine *encryptionEngine,
    if(encryptionEngine->hashAlgo != NULL)
       n += encryptionEngine->hashAlgo->digestSize;
 
-   //Check cipher mode
+   //Check cipher mode of operation
    if(encryptionEngine->cipherMode == CIPHER_MODE_CBC)
    {
       //TLS 1.1 and 1.2 use an explicit IV

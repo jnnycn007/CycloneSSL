@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -34,8 +34,8 @@
 //Dependencies
 #include "tls.h"
 #include "tls_record.h"
-#include "tls_record_encryption.h"
-#include "tls_record_decryption.h"
+#include "tls_record_encrypt.h"
+#include "tls_record_decrypt.h"
 #include "debug.h"
 
 //Check TLS library configuration
@@ -993,8 +993,9 @@ void tlsFormatNonce(TlsContext *context, TlsEncryptionEngine *encryptionEngine,
          //Point to the DTLS record
          dtlsRecord = (DtlsRecord *) record;
 
-         //The 64-bit record sequence number is serialized as an 8-byte,
-         //big-endian value
+         //Concatenate the epoch and the sequence number in the order they
+         //appear on the wire. Note that the DTLS epoch + sequence number is
+         //the same length as the TLS sequence number
          osMemcpy(nonce + n - 8, (void *) &dtlsRecord->epoch, 2);
          osMemcpy(nonce + n - 6, &dtlsRecord->seqNum, 6);
       }

@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -31,7 +31,7 @@
  * is designed to prevent eavesdropping, tampering, or message forgery
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -309,6 +309,14 @@ error_t tlsSetVersion(TlsContext *context, uint16_t versionMin,
    if(versionMin > versionMax)
       return ERROR_INVALID_PARAMETER;
 
+   //DTLS protocol?
+   if(context->transportProtocol == TLS_TRANSPORT_PROTOCOL_DATAGRAM)
+   {
+      //Make sure the DTLS version is acceptable
+      if(versionMin > TLS_VERSION_1_2 || versionMax > TLS_VERSION_1_2)
+         return ERROR_INVALID_PARAMETER;
+   }
+
    //Minimum version accepted by the implementation
    context->versionMin = MAX(versionMin, TLS_MIN_VERSION);
    //Maximum version accepted by the implementation
@@ -348,6 +356,19 @@ error_t tlsSetTransportProtocol(TlsContext *context,
 
    //Set transport protocol
    context->transportProtocol = transportProtocol;
+
+   //DTLS protocol?
+   if(transportProtocol == TLS_TRANSPORT_PROTOCOL_DATAGRAM)
+   {
+      //Minimum version accepted by the implementation
+      context->versionMin = MIN(context->versionMin, TLS_VERSION_1_2);
+      //Maximum version accepted by the implementation
+      context->versionMax = MIN(context->versionMax, TLS_VERSION_1_2);
+
+      //Default record layer version number
+      context->version = context->versionMin;
+      context->encryptionEngine.version = context->versionMin;
+   }
 
    //Successful processing
    return NO_ERROR;
@@ -2568,8 +2589,8 @@ bool_t tlsIsRxReady(TlsContext *context)
       }
    }
 
-   //The function returns TRUE if some data can be read immediately
-   //without blocking
+   //The function returns TRUE if some data can be read immediately without
+   //blocking
    return ready;
 }
 

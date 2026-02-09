@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -231,8 +231,32 @@ void tlsUpdateTranscriptHash(TlsContext *context, const void *data,
       //Valid hash algorithm?
       if(hashAlgo != NULL && context->transcriptHashContext != NULL)
       {
-         //Update hash value with message contents
-         hashAlgo->update(context->transcriptHashContext, data, length);
+         //DTLS 1.3 protocol?
+         if(context->transportProtocol == TLS_TRANSPORT_PROTOCOL_DATAGRAM &&
+            context->version == TLS_VERSION_1_3 &&
+            length >= sizeof(DtlsHandshake))
+         {
+            const DtlsHandshake *message;
+
+            //Point to the handshake message
+            message = (DtlsHandshake *) data;
+
+            //In DTLS 1.3, the message transcript is computed over the original
+            //TLS 1.3-style handshake messages without the message_seq,
+            //fragment_offset, and fragment_length values. Note that this is a
+            //change from DTLS 1.2 where those values were included in the
+            //transcript (refer to RFC 9147, section 5.2)
+            hashAlgo->update(context->transcriptHashContext, message, 4);
+
+            //Update hash value with message contents
+            hashAlgo->update(context->transcriptHashContext, message->data,
+               length - sizeof(DtlsHandshake));
+         }
+         else
+         {
+            //Update hash value with message contents
+            hashAlgo->update(context->transcriptHashContext, data, length);
+         }
       }
    }
 #endif

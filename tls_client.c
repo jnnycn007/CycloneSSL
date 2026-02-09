@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -31,7 +31,7 @@
  * is designed to prevent eavesdropping, tampering, or message forgery
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -87,7 +87,7 @@ error_t tlsSendClientHello(TlsContext *context)
    //Point to the buffer where to format the message
    message = (TlsClientHello *) (context->txBuffer + context->txBufferLen);
 
-   //Initial ClientHello?
+   //Initial or updated ClientHello?
    if(context->state == TLS_STATE_CLIENT_HELLO)
    {
       //Generate the client random value using a cryptographically-safe
@@ -137,10 +137,7 @@ error_t tlsSendClientHello(TlsContext *context)
    if(!error)
    {
       //TLS 1.3 supported by the client?
-      if(context->versionMax >= TLS_VERSION_1_3 &&
-         (context->transportProtocol == TLS_TRANSPORT_PROTOCOL_STREAM ||
-         context->transportProtocol == TLS_TRANSPORT_PROTOCOL_QUIC ||
-         context->transportProtocol == TLS_TRANSPORT_PROTOCOL_EAP))
+      if(context->versionMax >= TLS_VERSION_1_3)
       {
          //Initial or updated ClientHello?
          if(context->state == TLS_STATE_CLIENT_HELLO)
@@ -298,8 +295,8 @@ error_t tlsFormatClientHello(TlsContext *context,
    TlsExtensionList *extensionList;
 
    //In TLS 1.3, the client indicates its version preferences in the
-   //SupportedVersions extension and the legacy_version field must be
-   //set to 0x0303, which is the version number for TLS 1.2
+   //SupportedVersions extension and the legacy_version field must be set
+   //to 0x0303, which is the version number for TLS 1.2
    context->clientVersion = MIN(context->versionMax, TLS_VERSION_1_2);
 
 #if (DTLS_SUPPORT == ENABLED)
@@ -312,8 +309,8 @@ error_t tlsFormatClientHello(TlsContext *context,
 #endif
 
    //In previous versions of TLS, the version field is used for version
-   //negotiation and represents the highest version number supported by
-   //the client
+   //negotiation and represents the highest version number supported by the
+   //client
    message->clientVersion = htons(context->clientVersion);
 
    //Client random value
@@ -604,16 +601,13 @@ error_t tlsFormatClientHello(TlsContext *context,
 
 #if (TLS_MAX_VERSION >= TLS_VERSION_1_3 && TLS_MIN_VERSION <= TLS_VERSION_1_3)
    //TLS 1.3 supported by the client?
-   if(context->versionMax >= TLS_VERSION_1_3 &&
-      (context->transportProtocol == TLS_TRANSPORT_PROTOCOL_STREAM ||
-      context->transportProtocol == TLS_TRANSPORT_PROTOCOL_QUIC ||
-      context->transportProtocol == TLS_TRANSPORT_PROTOCOL_EAP))
+   if(context->versionMax >= TLS_VERSION_1_3)
    {
       Tls13PskIdentityList *identityList;
       Tls13PskBinderList *binderList;
 
-      //Clients must not use cookies in their initial ClientHello
-      if(context->state != TLS_STATE_CLIENT_HELLO)
+      //Updated ClientHello?
+      if(context->state == TLS_STATE_CLIENT_HELLO_3)
       {
          //When sending the new ClientHello, the client must copy the contents
          //of the Cookie extension received in the HelloRetryRequest into a
@@ -1584,7 +1578,7 @@ error_t tlsParseCertificateRequest(TlsContext *context,
    {
       //Servers which are authenticating with a PSK must not send the
       //CertificateRequest message in the main handshake
-      return ERROR_HANDSHAKE_FAILED;
+      return ERROR_UNEXPECTED_MESSAGE;
    }
    else
    {

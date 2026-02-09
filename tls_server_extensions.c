@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -63,28 +63,41 @@ error_t tlsFormatServerSniExtension(TlsContext *context,
    //shall include an extension of type SNI in the ServerHello
    if(context->serverName != NULL)
    {
-      //Full handshake?
-      if(!context->resume)
+      TlsExtension *extension;
+
+      //Add SNI (Server Name Indication) extension
+      extension = (TlsExtension *) p;
+      //Type of the extension
+      extension->type = HTONS(TLS_EXT_SERVER_NAME);
+
+      //The extension data field of this extension shall be empty (refer to
+      //RFC 6066, section 3)
+      extension->length = HTONS(0);
+
+      //Compute the length, in bytes, of the ServerName extension
+      n = sizeof(TlsExtension);
+
+      //Version of TLS prior to TLS 1.3?
+      if(context->version <= TLS_VERSION_1_2)
       {
-         TlsExtension *extension;
-
-         //Add SNI (Server Name Indication) extension
-         extension = (TlsExtension *) p;
-         //Type of the extension
-         extension->type = HTONS(TLS_EXT_SERVER_NAME);
-
-         //The extension data field of this extension shall be empty (refer to
-         //RFC 6066, section 3)
-         extension->length = HTONS(0);
-
-         //Compute the length, in bytes, of the ServerName extension
-         n = sizeof(TlsExtension);
+         //When resuming a session, the server must not include a ServerName
+         //extension in the ServerHello (refer to RFC 6066, section 3)
+         if(context->resume)
+         {
+            n = 0;
+         }
       }
       else
       {
          //When resuming a session, the server must not include a ServerName
          //extension in the ServerHello (refer to RFC 6066, section 3)
-         n = 0;
+         if(context->keyExchMethod == TLS13_KEY_EXCH_PSK_DHE ||
+            context->keyExchMethod == TLS13_KEY_EXCH_PSK_ECDHE ||
+            context->keyExchMethod == TLS13_KEY_EXCH_PSK_MLKEM ||
+            context->keyExchMethod == TLS13_KEY_EXCH_PSK_HYBRID)
+         {
+            n = 0;
+         }
       }
    }
 #endif
@@ -902,7 +915,7 @@ error_t tlsParseClientRecordSizeLimitExtension(TlsContext *context,
       }
 
       //Initial or updated ClientHello?
-      if(context->state == TLS_STATE_CLIENT_HELLO_2)
+      if(context->state == TLS_STATE_CLIENT_HELLO_3)
       {
          //When responding to a HelloRetryRequest, the client must send the
          //same ClientHello without modification
@@ -924,7 +937,7 @@ error_t tlsParseClientRecordSizeLimitExtension(TlsContext *context,
    else
    {
       //Initial or updated ClientHello?
-      if(context->state == TLS_STATE_CLIENT_HELLO_2)
+      if(context->state == TLS_STATE_CLIENT_HELLO_3)
       {
          //When responding to a HelloRetryRequest, the client must send the
          //same ClientHello without modification

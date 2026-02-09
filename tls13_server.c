@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -115,7 +115,7 @@ error_t tls13SendHelloRetryRequest(TlsContext *context)
 #endif
       {
          //Wait for the second updated ClientHello
-         tlsChangeState(context, TLS_STATE_CLIENT_HELLO_2);
+         tlsChangeState(context, TLS_STATE_CLIENT_HELLO_3);
       }
    }
 
@@ -333,6 +333,15 @@ error_t tls13FormatHelloRetryRequest(TlsContext *context,
    //Any error to report?
    if(error)
       return error;
+
+#if(DTLS_SUPPORT == ENABLED)
+   //When sending a HelloRetryRequest, the server may provide a cookie
+   //extension to the client (refer to RFC 8446, section 4.2.2)
+   error = tls13FormatCookieExtension(context, p, &n);
+   //Any error to report?
+   if(error)
+      return error;
+#endif
 
    //Fix the length of the extension list
    extensionList->length += (uint16_t) n;

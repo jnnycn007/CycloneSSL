@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -108,10 +108,7 @@ error_t tlsFormatSessionId(TlsContext *context, uint8_t *p,
    size_t n;
 
    //TLS 1.3 supported by the client?
-   if(context->versionMax >= TLS_VERSION_1_3 &&
-      (context->transportProtocol == TLS_TRANSPORT_PROTOCOL_STREAM ||
-      context->transportProtocol == TLS_TRANSPORT_PROTOCOL_QUIC ||
-      context->transportProtocol == TLS_TRANSPORT_PROTOCOL_EAP))
+   if(context->versionMax >= TLS_VERSION_1_3)
    {
       //A client which has a cached session ID set by a pre-TLS 1.3 server
       //should set this field to that value
@@ -1443,15 +1440,18 @@ error_t tlsSelectClientVersion(TlsContext *context,
       if(context->versionMax <= TLS_VERSION_1_2)
          return ERROR_UNSUPPORTED_EXTENSION;
 
-      //The legacy_version field must be set to 0x0303, which is the version
-      //number for TLS 1.2
+      //DTLS protocol?
       if(context->transportProtocol == TLS_TRANSPORT_PROTOCOL_DATAGRAM)
       {
+         //The legacy_version field must be set to {254, 253}, which is the
+         //version number for DTLS 1.2
          if(ntohs(message->serverVersion) != DTLS_VERSION_1_2)
             return ERROR_VERSION_NOT_SUPPORTED;
       }
       else
       {
+         //The legacy_version field must be set to 0x0303, which is the version
+         //number for TLS 1.2
          if(ntohs(message->serverVersion) != TLS_VERSION_1_2)
             return ERROR_VERSION_NOT_SUPPORTED;
       }
@@ -1518,7 +1518,7 @@ error_t tlsSelectClientVersion(TlsContext *context,
       if(context->transportProtocol == TLS_TRANSPORT_PROTOCOL_DATAGRAM)
       {
          //A server which negotiates DTLS 1.3 must set the legacy_version field
-         //to 0xFEFD (DTLS 1.2) and use the SupportedVersions extension instead
+         //to 0xfefd (DTLS 1.2) and use the SupportedVersions extension instead
          if(selectedVersion < DTLS_VERSION_1_2)
             return ERROR_ILLEGAL_PARAMETER;
       }
@@ -1568,9 +1568,7 @@ error_t tlsSelectClientVersion(TlsContext *context,
    //If the ServerHello indicates TLS 1.2 or below, TLS 1.3 client must check
    //that the last 8 bytes are not equal to the bytes 44 4F 57 4E 47 52 44 01
    if(context->version <= TLS_VERSION_1_2 &&
-      context->versionMax >= TLS_VERSION_1_3 &&
-      (context->transportProtocol == TLS_TRANSPORT_PROTOCOL_STREAM ||
-      context->transportProtocol == TLS_TRANSPORT_PROTOCOL_EAP))
+      context->versionMax >= TLS_VERSION_1_3)
    {
       //If a match is found, the client must abort the handshake with an
       //illegal_parameter alert

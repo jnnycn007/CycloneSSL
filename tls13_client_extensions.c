@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -576,23 +576,45 @@ error_t tls13ParseServerSupportedVersionsExtension(TlsContext *context,
    //The extension contains the selected version value
    version = LOAD16BE(selectedVersion->value);
 
-   //If the SupportedVersions extension contains a version prior to TLS 1.3,
-   //the client must abort the handshake with an illegal_parameter alert
-   if(version < TLS_VERSION_1_3)
-      return ERROR_ILLEGAL_PARAMETER;
-
    //Debug message
    TRACE_INFO("  selectedVersion = 0x%04" PRIX16 " (%s)\r\n",
       version, tlsGetVersionName(version));
 
-   //Set the TLS version to be used
-   error = tlsSelectVersion(context, version);
-   //Specified TLS/DTLS version not supported?
-   if(error)
-      return error;
+#if (DTLS_SUPPORT == ENABLED)
+   //DTLS protocol?
+   if(context->transportProtocol == TLS_TRANSPORT_PROTOCOL_DATAGRAM)
+   {
+      //Version of DTLS prior to DTLS 1.3?
+      if(version > DTLS_VERSION_1_3)
+      {
+         //The client must abort the handshake with an illegal_parameter alert
+         error = ERROR_ILLEGAL_PARAMETER;
+      }
+      else
+      {
+         //Set the DTLS version to be used
+         error = dtlsSelectVersion(context, version);
+      }
+   }
+   else
+#endif
+   //TLS protocol?
+   {
+      //Version of TLS prior to TLS 1.3?
+      if(version < TLS_VERSION_1_3)
+      {
+         //The client must abort the handshake with an illegal_parameter alert
+         error = ERROR_ILLEGAL_PARAMETER;
+      }
+      else
+      {
+         //Set the TLS version to be used
+         error = tlsSelectVersion(context, version);
+      }
+   }
 
-   //Successful processing
-   return NO_ERROR;
+   //Return status code
+   return error;
 }
 
 

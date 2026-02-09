@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -240,10 +240,21 @@ error_t tls13ParseHelloRetryRequest(TlsContext *context,
    //Compression method
    TRACE_DEBUG("  legacyCompressMethod = 0x%02" PRIX8 "\r\n", compressMethod);
 
-   //The legacy_version field must be set to 0x0303, which is the version
-   //number for TLS 1.2
-   if(ntohs(message->serverVersion) != TLS_VERSION_1_2)
-      return ERROR_VERSION_NOT_SUPPORTED;
+   //DTLS protocol?
+   if(context->transportProtocol == TLS_TRANSPORT_PROTOCOL_DATAGRAM)
+   {
+      //The legacy_version field must be set to {254, 253}, which is the
+      //version number for DTLS 1.2
+      if(ntohs(message->serverVersion) != DTLS_VERSION_1_2)
+         return ERROR_VERSION_NOT_SUPPORTED;
+   }
+   else
+   {
+      //The legacy_version field must be set to 0x0303, which is the version
+      //number for TLS 1.2
+      if(ntohs(message->serverVersion) != TLS_VERSION_1_2)
+         return ERROR_VERSION_NOT_SUPPORTED;
+   }
 
    //A client which receives a legacy_session_id_echo field that does not
    //match what it sent in the ClientHello must abort the handshake with an
@@ -399,7 +410,7 @@ error_t tls13ParseHelloRetryRequest(TlsContext *context,
 #endif
    {
       //The client can send its second flight
-      tlsChangeState(context, TLS_STATE_CLIENT_HELLO_2);
+      tlsChangeState(context, TLS_STATE_CLIENT_HELLO_3);
    }
 
    //Successful processing

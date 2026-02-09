@@ -1,12 +1,12 @@
 /**
- * @file tls_record_decryption.c
+ * @file tls_record_decrypt.c
  * @brief TLS record decryption
  *
  * @section License
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -34,8 +34,8 @@
 //Dependencies
 #include "tls.h"
 #include "tls_record.h"
-#include "tls_record_decryption.h"
-#include "tls_record_encryption.h"
+#include "tls_record_decrypt.h"
+#include "tls_record_encrypt.h"
 #include "tls_misc.h"
 #include "cipher_modes/cbc.h"
 #include "aead/aead_algorithms.h"
@@ -729,8 +729,10 @@ __weak_func uint32_t tlsVerifyMac(TlsContext *context,
       //Point to the DTLS record
       dtlsRecord = (DtlsRecord *) record;
 
-      //Compute the MAC over the 64-bit value formed by concatenating the
+      //Rather than using TLS's implicit sequence number, the sequence number
+      //used to compute the MAC is the 64-bit value formed by concatenating the
       //epoch and the sequence number in the order they appear on the wire
+      //(refer to RFC 9147, section 4.1.2.1)
       hmacUpdate(hmacContext, (void *) &dtlsRecord->epoch, 2);
       hmacUpdate(hmacContext, &dtlsRecord->seqNum, 6);
 

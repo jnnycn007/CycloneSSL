@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 #ifndef _TLS_H
@@ -81,13 +81,13 @@ struct _TlsEncryptionEngine;
 #endif
 
 //Version string
-#define CYCLONE_SSL_VERSION_STRING "2.5.4"
+#define CYCLONE_SSL_VERSION_STRING "2.6.0"
 //Major version
 #define CYCLONE_SSL_MAJOR_VERSION 2
 //Minor version
-#define CYCLONE_SSL_MINOR_VERSION 5
+#define CYCLONE_SSL_MINOR_VERSION 6
 //Revision number
-#define CYCLONE_SSL_REV_NUMBER 4
+#define CYCLONE_SSL_REV_NUMBER 0
 
 //TLS version numbers
 #define SSL_VERSION_3_0 0x0300
@@ -210,7 +210,7 @@ struct _TlsEncryptionEngine;
 
 //Encrypt-then-MAC extension
 #ifndef TLS_ENCRYPT_THEN_MAC_SUPPORT
-   #define TLS_ENCRYPT_THEN_MAC_SUPPORT DISABLED
+   #define TLS_ENCRYPT_THEN_MAC_SUPPORT ENABLED
 #elif (TLS_ENCRYPT_THEN_MAC_SUPPORT != ENABLED && TLS_ENCRYPT_THEN_MAC_SUPPORT != DISABLED)
    #error TLS_ENCRYPT_THEN_MAC_SUPPORT parameter is not valid
 #endif
@@ -245,7 +245,7 @@ struct _TlsEncryptionEngine;
 
 //Signature Algorithms Certificate extension
 #ifndef TLS_SIGN_ALGOS_CERT_SUPPORT
-   #define TLS_SIGN_ALGOS_CERT_SUPPORT DISABLED
+   #define TLS_SIGN_ALGOS_CERT_SUPPORT ENABLED
 #elif (TLS_SIGN_ALGOS_CERT_SUPPORT != ENABLED && TLS_SIGN_ALGOS_CERT_SUPPORT != DISABLED)
    #error TLS_SIGN_ALGOS_CERT_SUPPORT parameter is not valid
 #endif
@@ -553,7 +553,7 @@ struct _TlsEncryptionEngine;
 
 //SHA-1 hash support (weak)
 #ifndef TLS_SHA1_SUPPORT
-   #define TLS_SHA1_SUPPORT ENABLED
+   #define TLS_SHA1_SUPPORT DISABLED
 #elif (TLS_SHA1_SUPPORT != ENABLED && TLS_SHA1_SUPPORT != DISABLED)
    #error TLS_SHA1_SUPPORT parameter is not valid
 #endif
@@ -728,7 +728,7 @@ struct _TlsEncryptionEngine;
 
 //Curve25519 elliptic curve support
 #ifndef TLS_X25519_SUPPORT
-   #define TLS_X25519_SUPPORT DISABLED
+   #define TLS_X25519_SUPPORT ENABLED
 #elif (TLS_X25519_SUPPORT != ENABLED && TLS_X25519_SUPPORT != DISABLED)
    #error TLS_X25519_SUPPORT parameter is not valid
 #endif
@@ -791,7 +791,7 @@ struct _TlsEncryptionEngine;
 
 //Minimum acceptable size for Diffie-Hellman prime modulus
 #ifndef TLS_MIN_DH_MODULUS_SIZE
-   #define TLS_MIN_DH_MODULUS_SIZE 1024
+   #define TLS_MIN_DH_MODULUS_SIZE 2048
 #elif (TLS_MIN_DH_MODULUS_SIZE < 512)
    #error TLS_MIN_DH_MODULUS_SIZE parameter is not valid
 #endif
@@ -805,7 +805,7 @@ struct _TlsEncryptionEngine;
 
 //Minimum acceptable size for RSA modulus
 #ifndef TLS_MIN_RSA_MODULUS_SIZE
-   #define TLS_MIN_RSA_MODULUS_SIZE 1024
+   #define TLS_MIN_RSA_MODULUS_SIZE 2048
 #elif (TLS_MIN_RSA_MODULUS_SIZE < 512)
    #error TLS_MIN_RSA_MODULUS_SIZE parameter is not valid
 #endif
@@ -819,7 +819,7 @@ struct _TlsEncryptionEngine;
 
 //Minimum acceptable size for DSA prime modulus
 #ifndef TLS_MIN_DSA_MODULUS_SIZE
-   #define TLS_MIN_DSA_MODULUS_SIZE 1024
+   #define TLS_MIN_DSA_MODULUS_SIZE 2048
 #elif (TLS_MIN_DSA_MODULUS_SIZE < 512)
    #error TLS_MIN_DSA_MODULUS_SIZE parameter is not valid
 #endif
@@ -1399,6 +1399,9 @@ typedef enum
    TLS_EXT_QUIC_TRANSPORT_PARAMETERS = 57,
    TLS_EXT_TICKET_REQUEST            = 58,
    TLS_EXT_DNSSEC_CHAIN              = 59,
+   TLS_EXT_SEQ_NUM_ENCRYPTION_ALGOS  = 60,
+   TLS_EXT_RRC                       = 61,
+   TLS_EXT_TLS_FLAG                  = 62,
    TLS_EXT_RENEGOTIATION_INFO        = 65281
 } TlsExtensionType;
 
@@ -1499,7 +1502,7 @@ typedef enum
    TLS_GROUP_SECP256R1_MLKEM768         = 4587,  //Draft
    TLS_GROUP_X25519_MLKEM768            = 4588,  //Draft
    TLS_GROUP_SECP384R1_MLKEM1024        = 4589,  //Draft
-   TLS_GROUP_CURVE_SM2_MLKEM768         = 65278, //Draft (must not used in any production environment)
+   TLS_GROUP_CURVE_SM2_MLKEM768         = 4590,  //Draft
    TLS_GROUP_EXPLICIT_PRIME_CURVE       = 65281, //RFC 4492
    TLS_GROUP_EXPLICIT_CHAR2_CURVE       = 65282  //RFC 4492
 } TlsNamedGroup;
@@ -1538,36 +1541,37 @@ typedef enum
    TLS_STATE_INIT                        = 0,
    TLS_STATE_CLIENT_HELLO                = 1,
    TLS_STATE_CLIENT_HELLO_2              = 2,
-   TLS_STATE_EARLY_DATA                  = 3,
-   TLS_STATE_HELLO_VERIFY_REQUEST        = 4,
-   TLS_STATE_HELLO_RETRY_REQUEST         = 5,
-   TLS_STATE_SERVER_HELLO                = 6,
-   TLS_STATE_SERVER_HELLO_2              = 7,
-   TLS_STATE_SERVER_HELLO_3              = 8,
-   TLS_STATE_HANDSHAKE_TRAFFIC_KEYS      = 9,
-   TLS_STATE_ENCRYPTED_EXTENSIONS        = 10,
-   TLS_STATE_SERVER_CERTIFICATE          = 11,
-   TLS_STATE_SERVER_KEY_EXCHANGE         = 12,
-   TLS_STATE_SERVER_CERTIFICATE_VERIFY   = 13,
-   TLS_STATE_CERTIFICATE_REQUEST         = 14,
-   TLS_STATE_SERVER_HELLO_DONE           = 15,
-   TLS_STATE_CLIENT_CERTIFICATE          = 16,
-   TLS_STATE_CLIENT_KEY_EXCHANGE         = 17,
-   TLS_STATE_CLIENT_CERTIFICATE_VERIFY   = 18,
-   TLS_STATE_CLIENT_CHANGE_CIPHER_SPEC   = 19,
-   TLS_STATE_CLIENT_CHANGE_CIPHER_SPEC_2 = 20,
-   TLS_STATE_CLIENT_FINISHED             = 21,
-   TLS_STATE_CLIENT_APP_TRAFFIC_KEYS     = 22,
-   TLS_STATE_SERVER_CHANGE_CIPHER_SPEC   = 23,
-   TLS_STATE_SERVER_CHANGE_CIPHER_SPEC_2 = 24,
-   TLS_STATE_SERVER_FINISHED             = 25,
-   TLS_STATE_END_OF_EARLY_DATA           = 26,
-   TLS_STATE_SERVER_APP_TRAFFIC_KEYS     = 27,
-   TLS_STATE_NEW_SESSION_TICKET          = 28,
-   TLS_STATE_KEY_UPDATE                  = 29,
-   TLS_STATE_APPLICATION_DATA            = 30,
-   TLS_STATE_CLOSING                     = 31,
-   TLS_STATE_CLOSED                      = 32
+   TLS_STATE_CLIENT_HELLO_3              = 3,
+   TLS_STATE_EARLY_DATA                  = 4,
+   TLS_STATE_HELLO_VERIFY_REQUEST        = 5,
+   TLS_STATE_HELLO_RETRY_REQUEST         = 6,
+   TLS_STATE_SERVER_HELLO                = 7,
+   TLS_STATE_SERVER_HELLO_2              = 8,
+   TLS_STATE_SERVER_HELLO_3              = 9,
+   TLS_STATE_HANDSHAKE_TRAFFIC_KEYS      = 10,
+   TLS_STATE_ENCRYPTED_EXTENSIONS        = 11,
+   TLS_STATE_SERVER_CERTIFICATE          = 12,
+   TLS_STATE_SERVER_KEY_EXCHANGE         = 13,
+   TLS_STATE_SERVER_CERTIFICATE_VERIFY   = 14,
+   TLS_STATE_CERTIFICATE_REQUEST         = 15,
+   TLS_STATE_SERVER_HELLO_DONE           = 16,
+   TLS_STATE_CLIENT_CERTIFICATE          = 17,
+   TLS_STATE_CLIENT_KEY_EXCHANGE         = 18,
+   TLS_STATE_CLIENT_CERTIFICATE_VERIFY   = 19,
+   TLS_STATE_CLIENT_CHANGE_CIPHER_SPEC   = 20,
+   TLS_STATE_CLIENT_CHANGE_CIPHER_SPEC_2 = 21,
+   TLS_STATE_CLIENT_FINISHED             = 22,
+   TLS_STATE_CLIENT_APP_TRAFFIC_KEYS     = 23,
+   TLS_STATE_SERVER_CHANGE_CIPHER_SPEC   = 24,
+   TLS_STATE_SERVER_CHANGE_CIPHER_SPEC_2 = 25,
+   TLS_STATE_SERVER_FINISHED             = 26,
+   TLS_STATE_END_OF_EARLY_DATA           = 27,
+   TLS_STATE_SERVER_APP_TRAFFIC_KEYS     = 28,
+   TLS_STATE_NEW_SESSION_TICKET          = 29,
+   TLS_STATE_KEY_UPDATE                  = 30,
+   TLS_STATE_APPLICATION_DATA            = 31,
+   TLS_STATE_CLOSING                     = 32,
+   TLS_STATE_CLOSED                      = 33
 } TlsState;
 
 
@@ -2314,7 +2318,7 @@ struct _TlsEncryptionEngine
    size_t macKeyLen;              ///<Length of the MAC key
    uint8_t encKey[48];            ///<Encryption key
    size_t encKeyLen;              ///<Length of the encryption key
-   uint8_t iv[16];                ///<Initialization vector
+   uint8_t iv[48];                ///<Initialization vector
    size_t fixedIvLen;             ///<Length of the fixed part of the IV
    size_t recordIvLen;            ///<Length of the IV
    size_t authTagLen;             ///<Length of the authentication tag
@@ -2330,6 +2334,10 @@ struct _TlsEncryptionEngine
 #if (DTLS_SUPPORT == ENABLED)
    uint16_t epoch;                ///<Counter value incremented on every cipher state change
    DtlsSequenceNumber dtlsSeqNum; ///<Record sequence number
+#endif
+#if (DTLS_SUPPORT == ENABLED && TLS_MAX_VERSION >= TLS_VERSION_1_3)
+   uint8_t snKey[32];             ///<Sequence number encryption key
+   void *snCipherContext;         ///<Sequence number encryption context
 #endif
 #if (TLS_QUIC_SUPPORT == ENABLED)
    TlsEncryptionLevel level;      ///<Encryption level

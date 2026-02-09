@@ -1,12 +1,12 @@
 /**
  * @file dtls_record.c
- * @brief DTLS record protocol
+ * @brief DTLS record layer
  *
  * @section License
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -35,9 +35,10 @@
 #include "tls.h"
 #include "tls_common.h"
 #include "tls_record.h"
-#include "tls_record_encryption.h"
-#include "tls_record_decryption.h"
+#include "tls_record_encrypt.h"
+#include "tls_record_decrypt.h"
 #include "tls_misc.h"
+#include "tls13_client_misc.h"
 #include "dtls_misc.h"
 #include "dtls_record.h"
 #include "debug.h"
@@ -72,6 +73,7 @@ error_t dtlsWriteProtocolData(TlsContext *context,
          //Client messages are grouped into a series of message flights
          if(context->state == TLS_STATE_CLIENT_HELLO ||
             context->state == TLS_STATE_CLIENT_HELLO_2 ||
+            context->state == TLS_STATE_CLIENT_HELLO_3 ||
             context->state == TLS_STATE_CLIENT_FINISHED)
          {
             //Reset retransmission counter
@@ -200,7 +202,9 @@ error_t dtlsReadProtocolData(TlsContext *context,
 #if (TLS_MAX_WARNING_ALERTS > 0)
       //Reset the count of consecutive warning alerts
       if(context->rxBufferType != TLS_TYPE_ALERT)
+      {
          context->alertCount = 0;
+      }
 #endif
 
       //Pointer to the received data
@@ -230,6 +234,7 @@ error_t dtlsWriteRecord(TlsContext *context, const uint8_t *data,
 {
    error_t error;
    size_t n;
+   uint16_t legacyVersion;
    DtlsRecord *record;
    TlsEncryptionEngine *encryptionEngine;
 
@@ -249,9 +254,14 @@ error_t dtlsWriteRecord(TlsContext *context, const uint8_t *data,
    //Copy record data
    osMemmove(record->data, data, length);
 
+   //The record version must be set to {254, 253} for all records generated
+   //by a DTLS 1.3 implementation other than an initial ClientHello
+   legacyVersion = MIN(encryptionEngine->version, TLS_VERSION_1_2);
+   legacyVersion = dtlsTranslateVersion(legacyVersion);
+
    //Format DTLS record
    record->type = contentType;
-   record->version = htons(dtlsTranslateVersion(encryptionEngine->version));
+   record->version = htons(legacyVersion);
    record->epoch = htons(encryptionEngine->epoch);
    record->length = htons(length);
 
@@ -429,6 +439,7 @@ error_t dtlsProcessRecord(TlsContext *context)
    //Handshake message received?
    if(context->rxBufferType == TLS_TYPE_HANDSHAKE)
    {
+      size_t length;
       size_t fragLength;
       DtlsHandshake *message;
 
@@ -585,17 +596,19 @@ error_t dtlsProcessRecord(TlsContext *context)
 
       //Point to the first fragment of the reassembly queue
       message = (DtlsHandshake *) context->rxBuffer;
+      //Retrive the length of the handshake message
+      length = LOAD24BE(message->length);
 
       //An unfragmented message is a degenerate case with fragment_offset = 0
       //and fragment_length = length
       if(LOAD24BE(message->fragOffset) == 0 &&
-         LOAD24BE(message->fragLength) == LOAD24BE(message->length))
+         LOAD24BE(message->fragLength) == length)
       {
          //The reassembly process is now complete
          context->rxFragQueueLen = 0;
 
          //Number of bytes available for reading
-         context->rxBufferLen = LOAD24BE(message->length) + sizeof(DtlsHandshake);
+         context->rxBufferLen = length + sizeof(DtlsHandshake);
          //Rewind to the beginning of the buffer
          context->rxBufferPos = 0;
 
@@ -610,6 +623,23 @@ error_t dtlsProcessRecord(TlsContext *context)
          {
             //Exit from the WAITING state
             context->txBufferLen = 0;
+         }
+         else if(message->msgType == TLS_TYPE_SERVER_HELLO)
+         {
+#if (TLS_MAX_VERSION >= TLS_VERSION_1_3 && TLS_MIN_VERSION <= TLS_VERSION_1_3)
+            //The HelloRetryRequest message uses the same structure as the
+            //ServerHello, but with Random field set to a special value
+            if(tls13IsHelloRetryRequest((TlsServerHello *) message->data,
+               length))
+            {
+               //Exit from the WAITING state
+               context->txBufferLen = 0;
+            }
+#endif
+         }
+         else
+         {
+            //Just for sanity
          }
       }
    }

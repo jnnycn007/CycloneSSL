@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -31,7 +31,7 @@
  * is designed to prevent eavesdropping, tampering, or message forgery
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -498,10 +498,20 @@ error_t tlsFormatServerHello(TlsContext *context,
    }
    else
    {
-      //The legacy_session_id_echo echoes the contents of the client's
-      //legacy_session_id field
-      osMemcpy(message->sessionId, context->sessionId, context->sessionIdLen);
-      message->sessionIdLen = (uint8_t) context->sessionIdLen;
+      //DTLS protocol?
+      if(context->transportProtocol == TLS_TRANSPORT_PROTOCOL_DATAGRAM)
+      {
+         //DTLS servers must not echo the "legacy_session_id" value from the
+         //client (refer to RFC 9147, section 5)
+         message->sessionIdLen = 0;
+      }
+      else
+      {
+         //The legacy_session_id_echo echoes the contents of the client's
+         //legacy_session_id field (refer to RFC 8446, section 4.1.3)
+         osMemcpy(message->sessionId, context->sessionId, context->sessionIdLen);
+         message->sessionIdLen = (uint8_t) context->sessionIdLen;
+      }
    }
 
    //Debug message
@@ -1183,7 +1193,7 @@ error_t tlsParseClientHello(TlsContext *context,
       //When a client first connects to a server, it is required to send
       //the ClientHello as its first message
    }
-   else if(context->state == TLS_STATE_CLIENT_HELLO_2)
+   else if(context->state == TLS_STATE_CLIENT_HELLO_3)
    {
 #if (TLS_MAX_VERSION >= TLS_VERSION_1_3 && TLS_MIN_VERSION <= TLS_VERSION_1_3)
       //The client will also send a updated ClientHello when the server has
@@ -1617,7 +1627,7 @@ error_t tlsParseClientHello(TlsContext *context,
       {
          tlsChangeState(context, TLS_STATE_SERVER_HELLO);
       }
-      else if(context->state == TLS_STATE_CLIENT_HELLO_2)
+      else if(context->state == TLS_STATE_CLIENT_HELLO_3)
       {
          tlsChangeState(context, TLS_STATE_SERVER_HELLO_2);
       }

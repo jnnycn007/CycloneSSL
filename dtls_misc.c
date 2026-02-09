@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -78,6 +78,18 @@ error_t dtlsSelectVersion(TlsContext *context, uint16_t version)
       {
          //Save protocol version
          context->version = TLS_VERSION_1_2;
+         //The specified DTLS version is acceptable
+         error = NO_ERROR;
+      }
+   }
+   else if(version == DTLS_VERSION_1_3)
+   {
+      //DTLS 1.3 is defined as a series of deltas from TLS 1.3
+      if(context->versionMin <= TLS_VERSION_1_3 &&
+         context->versionMax >= TLS_VERSION_1_3)
+      {
+         //Save protocol version
+         context->version = TLS_VERSION_1_3;
          //The specified DTLS version is acceptable
          error = NO_ERROR;
       }
@@ -148,16 +160,26 @@ error_t dtlsFormatCookie(TlsContext *context, uint8_t *p, size_t *written)
    //Add Cookie field
    cookie = (DtlsCookie *) p;
 
-   //When a HelloVerifyRequest message has been received by the client, it
-   //must retransmit the ClientHello with the cookie added
-   if(context->cookieLen > 0)
+   //Updated ClientHello?
+   if(context->state == TLS_STATE_CLIENT_HELLO_2)
    {
-      //Copy cookie
-      osMemcpy(cookie->value, context->cookie, context->cookieLen);
-   }
+      //The client must retransmit the ClientHello with the cookie added (refer
+      //to RFC 6347 section 4.2.1)
+      if(context->cookieLen > 0)
+      {
+         //Copy cookie
+         osMemcpy(cookie->value, context->cookie, context->cookieLen);
+      }
 
-   //Set the length of the cookie
-   cookie->length = (uint8_t) context->cookieLen;
+      //Set the length of the cookie
+      cookie->length = (uint8_t) context->cookieLen;
+   }
+   else
+   {
+      //When sending the first ClientHello, the client does not have a cookie
+      //yet. In this case, the Cookie field is left empty
+      cookie->length = 0;
+   }
 
    //Total number of bytes that have been written
    *written = sizeof(DtlsCookie) + cookie->length;
@@ -217,8 +239,20 @@ error_t dtlsVerifyCookie(TlsContext *context, const DtlsCookie *cookie,
          //Check status code
          if(!error)
          {
-            //Send a HelloVerifyRequest message to the DTLS client
-            tlsChangeState(context, TLS_STATE_HELLO_VERIFY_REQUEST);
+            //Version of DTLS prior to DTLS 1.3?
+            if(context->version <= TLS_VERSION_1_2)
+            {
+               //DTLS 1.2 uses the HelloVerifyRequest message to pass a cookie
+               //to the client and does not utilize the extension mechanism
+               tlsChangeState(context, TLS_STATE_HELLO_VERIFY_REQUEST);
+            }
+            else
+            {
+               //The DTLS 1.3 specification changes how cookies are exchanged
+               //compared to DTLS 1.2. DTLS 1.3 reuses the HelloRetryRequest
+               //message and conveys the cookie to the client via an extension
+               tlsChangeState(context, TLS_STATE_HELLO_RETRY_REQUEST);
+            }
          }
       }
    }
@@ -413,6 +447,7 @@ error_t dtlsParseClientSupportedVersionsExtension(TlsContext *context,
    //Supported DTLS versions
    const uint16_t supportedVersions[] =
    {
+      DTLS_VERSION_1_3,
       DTLS_VERSION_1_2,
       DTLS_VERSION_1_0
    };

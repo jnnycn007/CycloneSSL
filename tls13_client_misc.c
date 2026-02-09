@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -275,7 +275,7 @@ error_t tls13SendEarlyData(TlsContext *context, const void *data,
 #endif
          {
             //The client can send its second flight
-            tlsChangeState(context, TLS_STATE_CLIENT_HELLO_2);
+            tlsChangeState(context, TLS_STATE_CLIENT_HELLO_3);
          }
       }
       else if(context->state == TLS_STATE_CLIENT_CHANGE_CIPHER_SPEC)
@@ -283,7 +283,7 @@ error_t tls13SendEarlyData(TlsContext *context, const void *data,
          //Send a dummy ChangeCipherSpec record
          error = tlsSendChangeCipherSpec(context);
       }
-      else if(context->state == TLS_STATE_CLIENT_HELLO_2)
+      else if(context->state == TLS_STATE_CLIENT_HELLO_3)
       {
          //Compute early traffic keys
          error = tls13GenerateEarlyTrafficKeys(context);

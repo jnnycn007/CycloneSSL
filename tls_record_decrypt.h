@@ -1,12 +1,12 @@
 /**
- * @file tls_record_encryption.h
- * @brief TLS record encryption
+ * @file tls_record_decrypt.h
+ * @brief TLS record decryption
  *
  * @section License
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,11 +25,11 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
-#ifndef _TLS_RECORD_ENCRYPTION_H
-#define _TLS_RECORD_ENCRYPTION_H
+#ifndef _TLS_RECORD_DECRYPT_H
+#define _TLS_RECORD_DECRYPT_H
 
 //Dependencies
 #include "tls.h"
@@ -40,23 +40,30 @@ extern "C" {
 #endif
 
 //TLS related functions
-error_t tlsEncryptRecord(TlsContext *context,
-   TlsEncryptionEngine *encryptionEngine, void *record);
-
-error_t tlsEncryptAeadRecord(TlsContext *context,
-   TlsEncryptionEngine *encryptionEngine, void *record);
-
-error_t tlsEncryptCbcRecord(TlsContext *context,
-   TlsEncryptionEngine *encryptionEngine, void *record);
-
-error_t tlsEncryptStreamRecord(TlsContext *context,
-   TlsEncryptionEngine *encryptionEngine, void *record);
-
-error_t tlsAppendMessageAuthCode(TlsContext *context,
+error_t tlsDecryptRecord(TlsContext *context,
    TlsEncryptionEngine *decryptionEngine, void *record);
 
-error_t tlsComputeMac(TlsContext *context, TlsEncryptionEngine *encryptionEngine,
-   const void *record, const uint8_t *data, size_t dataLen, uint8_t *mac);
+error_t tlsDecryptAeadRecord(TlsContext *context,
+   TlsEncryptionEngine *decryptionEngine, void *record);
+
+error_t tlsDecryptCbcRecord(TlsContext *context,
+   TlsEncryptionEngine *decryptionEngine, void *record);
+
+error_t tlsDecryptStreamRecord(TlsContext *context,
+   TlsEncryptionEngine *decryptionEngine, void *record);
+
+error_t tlsVerifyMessageAuthCode(TlsContext *context,
+   TlsEncryptionEngine *decryptionEngine, void *record);
+
+uint32_t tlsVerifyPadding(const uint8_t *data, size_t dataLen,
+   size_t *paddingLen);
+
+uint32_t tlsVerifyMac(TlsContext *context,
+   TlsEncryptionEngine *decryptionEngine, const void *record,
+   const uint8_t *data, size_t dataLen, size_t maxDataLen, const uint8_t *mac);
+
+uint32_t tlsExtractMac(TlsEncryptionEngine *decryptionEngine,
+   const uint8_t *data, size_t dataLen, size_t maxDataLen, uint8_t *mac);
 
 //C++ guard
 #ifdef __cplusplus

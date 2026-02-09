@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -50,6 +50,10 @@ const uint16_t tlsSupportedGroups[] =
    TLS_GROUP_X25519_MLKEM768,
    TLS_GROUP_SECP256R1_MLKEM768,
    TLS_GROUP_SECP384R1_MLKEM1024,
+   TLS_GROUP_CURVE_SM2_MLKEM768,
+   TLS_GROUP_MLKEM512,
+   TLS_GROUP_MLKEM768,
+   TLS_GROUP_MLKEM1024,
    TLS_GROUP_X25519,
    TLS_GROUP_X448,
    TLS_GROUP_SECP160R1,
@@ -73,10 +77,7 @@ const uint16_t tlsSupportedGroups[] =
    TLS_GROUP_FFDHE3072,
    TLS_GROUP_FFDHE4096,
    TLS_GROUP_FFDHE6144,
-   TLS_GROUP_FFDHE8192,
-   TLS_GROUP_MLKEM512,
-   TLS_GROUP_MLKEM768,
-   TLS_GROUP_MLKEM1024
+   TLS_GROUP_FFDHE8192
 };
 
 
@@ -118,6 +119,13 @@ error_t tlsFormatClientSupportedVersionsExtension(TlsContext *context,
       //DTLS protocol?
       if(context->transportProtocol == TLS_TRANSPORT_PROTOCOL_DATAGRAM)
       {
+         //Check whether DTLS 1.3 is supported
+         if(context->versionMax >= TLS_VERSION_1_3 &&
+            context->versionMin <= TLS_VERSION_1_3)
+         {
+            supportedVersionList->value[n++] = HTONS(DTLS_VERSION_1_3);
+         }
+
          //Check whether DTLS 1.2 is supported
          if(context->versionMax >= TLS_VERSION_1_2 &&
             context->versionMin <= TLS_VERSION_1_2)
@@ -352,10 +360,7 @@ error_t tlsFormatClientRecordSizeLimitExtension(TlsContext *context,
    recordSizeLimit = MIN(context->rxBufferMaxLen, TLS_MAX_RECORD_LENGTH);
 
    //Check whether TLS 1.3 is supported
-   if(context->versionMax >= TLS_VERSION_1_3 &&
-      (context->transportProtocol == TLS_TRANSPORT_PROTOCOL_STREAM ||
-      context->transportProtocol == TLS_TRANSPORT_PROTOCOL_QUIC ||
-      context->transportProtocol == TLS_TRANSPORT_PROTOCOL_EAP))
+   if(context->versionMax >= TLS_VERSION_1_3)
    {
       //The value includes the content type and padding added in TLS 1.3
       recordSizeLimit++;

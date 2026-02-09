@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -109,7 +109,7 @@ error_t tls13NegotiateCipherSuite(TlsContext *context, const void *clientHello,
    //If the handshake includes a HelloRetryRequest, the initial ClientHello
    //and HelloRetryRequest are included in the transcript along with the new
    //ClientHello
-   if(context->state != TLS_STATE_CLIENT_HELLO_2)
+   if(context->state != TLS_STATE_CLIENT_HELLO_3)
    {
       //Initialize handshake message hashing
       error = tlsInitTranscriptHash(context);
@@ -531,7 +531,7 @@ error_t tls13ProcessEarlyData(TlsContext *context, const uint8_t *data,
       return ERROR_UNEXPECTED_MESSAGE;
 
    //Check current state
-   if(context->state != TLS_STATE_CLIENT_HELLO_2)
+   if(context->state != TLS_STATE_CLIENT_HELLO_3)
       return ERROR_UNEXPECTED_MESSAGE;
 
    //If the client opts to send 0-RTT data, it must supply an EarlyData

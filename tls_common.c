@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2010-2025 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2010-2026 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneSSL Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.4
+ * @version 2.6.0
  **/
 
 //Switch to the appropriate trace level
@@ -364,7 +364,7 @@ error_t tlsSendChangeCipherSpec(TlsContext *context)
             context->state == TLS_STATE_SERVER_CHANGE_CIPHER_SPEC_2)
          {
             //The client can send its second flight
-            tlsChangeState(context, TLS_STATE_CLIENT_HELLO_2);
+            tlsChangeState(context, TLS_STATE_CLIENT_HELLO_3);
          }
          else if(context->state == TLS_STATE_SERVER_CHANGE_CIPHER_SPEC ||
             context->state == TLS_STATE_CLIENT_CHANGE_CIPHER_SPEC_2)
@@ -1455,7 +1455,7 @@ error_t tlsParseChangeCipherSpec(TlsContext *context,
          //A ChangeCipherSpec message received received before the first
          //ClientHello message or after the client's Finished message must
          //be treated as an unexpected record type
-         if(context->state != TLS_STATE_CLIENT_HELLO_2 &&
+         if(context->state != TLS_STATE_CLIENT_HELLO_3 &&
             context->state != TLS_STATE_CLIENT_CERTIFICATE &&
             context->state != TLS_STATE_CLIENT_CERTIFICATE_VERIFY &&
             context->state != TLS_STATE_CLIENT_FINISHED)
