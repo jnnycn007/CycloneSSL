@@ -298,15 +298,15 @@ error_t dtlsWriteRecord(TlsContext *context, const uint8_t *data,
             return error;
       }
 
+      //Length of the resulting datagram, in bytes
+      n = ntohs(record->length) + sizeof(DtlsRecord);
+
       //Debug message
-      TRACE_DEBUG("Encrypted DTLS record (%" PRIuSIZE " bytes)...\r\n", ntohs(record->length));
-      TRACE_DEBUG_ARRAY("  ", record, ntohs(record->length) + sizeof(DtlsRecord));
+      TRACE_DEBUG("Encrypted DTLS record (%" PRIuSIZE " bytes)...\r\n", n);
+      TRACE_DEBUG_ARRAY("  ", record, n);
 
       //Increment sequence number
       dtlsIncSequenceNumber(&encryptionEngine->dtlsSeqNum);
-
-      //Length of the resulting datagram, in bytes
-      n = ntohs(record->length) + sizeof(DtlsRecord);
 
       //Debug message
       TRACE_INFO("Sending UDP datagram (%" PRIuSIZE " bytes)...\r\n", n);
@@ -339,10 +339,10 @@ error_t dtlsReadRecord(TlsContext *context)
    //Point to the decryption engine
    decryptionEngine = &context->decryptionEngine;
 
-   //Make sure the datagram is large enough to hold a DTLS record
+   //Malformed datagram?
    if(context->rxDatagramLen < sizeof(DtlsRecord))
    {
-      //Drop received datagram
+      //Drop the received datagram
       context->rxDatagramLen = 0;
       //Report an error
       return ERROR_INVALID_LENGTH;
@@ -353,10 +353,10 @@ error_t dtlsReadRecord(TlsContext *context)
    //Retrieve the length of the record
    recordLen = ntohs(record->length);
 
-   //Sanity check
+   //Malformed DTLS record?
    if((recordLen + sizeof(DtlsRecord)) > context->rxDatagramLen)
    {
-      //Drop received datagram
+      //Drop the received datagram
       context->rxDatagramLen = 0;
       //Report an error
       return ERROR_INVALID_LENGTH;
@@ -1037,16 +1037,18 @@ error_t dtlsFragmentHandshakeMessage(TlsContext *context, uint16_t version,
             return error;
       }
 
+      //Length of the datagram, in bytes
+      n = ntohs(record->length) + sizeof(DtlsRecord);
+
       //Debug message
-      TRACE_DEBUG("Encrypted DTLS record (%" PRIuSIZE " bytes)...\r\n", ntohs(record->length));
-      TRACE_DEBUG_ARRAY("  ", record, ntohs(record->length) + sizeof(DtlsRecord));
+      TRACE_DEBUG("Encrypted DTLS record (%" PRIuSIZE " bytes)...\r\n", n);
+      TRACE_DEBUG_ARRAY("  ", record, n);
 
       //Increment sequence number
       dtlsIncSequenceNumber(&encryptionEngine->dtlsSeqNum);
 
       //Adjust the length of the datagram
-      context->txDatagramLen += ntohs(record->length) + sizeof(DtlsRecord);
-
+      context->txDatagramLen += n;
       //Next fragment
       fragOffset += fragLength;
 

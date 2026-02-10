@@ -642,28 +642,28 @@ struct _TlsEncryptionEngine;
    #error TLS_SECP160R2_SUPPORT parameter is not valid
 #endif
 
-//secp192k1 elliptic curve support
+//secp192k1 elliptic curve support (weak)
 #ifndef TLS_SECP192K1_SUPPORT
    #define TLS_SECP192K1_SUPPORT DISABLED
 #elif (TLS_SECP192K1_SUPPORT != ENABLED && TLS_SECP192K1_SUPPORT != DISABLED)
    #error TLS_SECP192K1_SUPPORT parameter is not valid
 #endif
 
-//secp192r1 elliptic curve support (NIST P-192)
+//secp192r1 elliptic curve support (weak)
 #ifndef TLS_SECP192R1_SUPPORT
    #define TLS_SECP192R1_SUPPORT DISABLED
 #elif (TLS_SECP192R1_SUPPORT != ENABLED && TLS_SECP192R1_SUPPORT != DISABLED)
    #error TLS_SECP192R1_SUPPORT parameter is not valid
 #endif
 
-//secp224k1 elliptic curve support
+//secp224k1 elliptic curve support (weak)
 #ifndef TLS_SECP224K1_SUPPORT
    #define TLS_SECP224K1_SUPPORT DISABLED
 #elif (TLS_SECP224K1_SUPPORT != ENABLED && TLS_SECP224K1_SUPPORT != DISABLED)
    #error TLS_SECP224K1_SUPPORT parameter is not valid
 #endif
 
-//secp224r1 elliptic curve support (NIST P-224)
+//secp224r1 elliptic curve support (weak)
 #ifndef TLS_SECP224R1_SUPPORT
    #define TLS_SECP224R1_SUPPORT DISABLED
 #elif (TLS_SECP224R1_SUPPORT != ENABLED && TLS_SECP224R1_SUPPORT != DISABLED)
@@ -677,21 +677,21 @@ struct _TlsEncryptionEngine;
    #error TLS_SECP256K1_SUPPORT parameter is not valid
 #endif
 
-//secp256r1 elliptic curve support (NIST P-256)
+//secp256r1 elliptic curve support
 #ifndef TLS_SECP256R1_SUPPORT
    #define TLS_SECP256R1_SUPPORT ENABLED
 #elif (TLS_SECP256R1_SUPPORT != ENABLED && TLS_SECP256R1_SUPPORT != DISABLED)
    #error TLS_SECP256R1_SUPPORT parameter is not valid
 #endif
 
-//secp384r1 elliptic curve support (NIST P-384)
+//secp384r1 elliptic curve support
 #ifndef TLS_SECP384R1_SUPPORT
    #define TLS_SECP384R1_SUPPORT ENABLED
 #elif (TLS_SECP384R1_SUPPORT != ENABLED && TLS_SECP384R1_SUPPORT != DISABLED)
    #error TLS_SECP384R1_SUPPORT parameter is not valid
 #endif
 
-//secp521r1 elliptic curve support (NIST P-521)
+//secp521r1 elliptic curve support
 #ifndef TLS_SECP521R1_SUPPORT
    #define TLS_SECP521R1_SUPPORT DISABLED
 #elif (TLS_SECP521R1_SUPPORT != ENABLED && TLS_SECP521R1_SUPPORT != DISABLED)

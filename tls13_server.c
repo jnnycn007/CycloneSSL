@@ -276,10 +276,20 @@ error_t tls13FormatHelloRetryRequest(TlsContext *context,
    //Length of the handshake message
    *length = sizeof(Tls13HelloRetryRequest);
 
-   //The legacy_session_id_echo echoes the contents of the client's
-   //legacy_session_id field
-   osMemcpy(message->sessionId, context->sessionId, context->sessionIdLen);
-   message->sessionIdLen = (uint8_t) context->sessionIdLen;
+   //DTLS protocol?
+   if(context->transportProtocol == TLS_TRANSPORT_PROTOCOL_DATAGRAM)
+   {
+      //DTLS servers must not echo the legacy_session_id value from the
+      //client (refer to RFC 9147, section 5)
+      message->sessionIdLen = 0;
+   }
+   else
+   {
+      //The legacy_session_id_echo echoes the contents of the client's
+      //legacy_session_id field
+      osMemcpy(message->sessionId, context->sessionId, context->sessionIdLen);
+      message->sessionIdLen = (uint8_t) context->sessionIdLen;
+   }
 
    //Debug message
    TRACE_INFO("Session ID (%" PRIu8 " bytes):\r\n", message->sessionIdLen);
@@ -334,6 +344,11 @@ error_t tls13FormatHelloRetryRequest(TlsContext *context,
    if(error)
       return error;
 
+   //Fix the length of the extension list
+   extensionList->length += (uint16_t) n;
+   //Point to the next field
+   p += n;
+
 #if(DTLS_SUPPORT == ENABLED)
    //When sending a HelloRetryRequest, the server may provide a cookie
    //extension to the client (refer to RFC 8446, section 4.2.2)
@@ -341,12 +356,12 @@ error_t tls13FormatHelloRetryRequest(TlsContext *context,
    //Any error to report?
    if(error)
       return error;
-#endif
 
    //Fix the length of the extension list
    extensionList->length += (uint16_t) n;
    //Point to the next field
    p += n;
+#endif
 
    //Convert the length of the extension list to network byte order
    extensionList->length = htons(extensionList->length);

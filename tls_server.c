@@ -501,7 +501,7 @@ error_t tlsFormatServerHello(TlsContext *context,
       //DTLS protocol?
       if(context->transportProtocol == TLS_TRANSPORT_PROTOCOL_DATAGRAM)
       {
-         //DTLS servers must not echo the "legacy_session_id" value from the
+         //DTLS servers must not echo the legacy_session_id value from the
          //client (refer to RFC 9147, section 5)
          message->sessionIdLen = 0;
       }

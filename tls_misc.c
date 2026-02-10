@@ -1690,7 +1690,9 @@ size_t tlsComputeEncryptionOverhead(TlsEncryptionEngine *encryptionEngine,
 
    //Message authentication?
    if(encryptionEngine->hashAlgo != NULL)
+   {
       n += encryptionEngine->hashAlgo->digestSize;
+   }
 
    //Check cipher mode of operation
    if(encryptionEngine->cipherMode == CIPHER_MODE_CBC)
