@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.4
+ * @version 2.6.6
  **/
 
 //Switch to the appropriate trace level
@@ -514,8 +514,8 @@ error_t tlsGenerateRsaPssSignature(TlsContext *context,
    {
       //Generate RSA signature (RSASSA-PSS signature scheme)
       error = rsassaPssSign(context->prngAlgo, context->prngContext,
-         &privateKey, hashAlgo, hashAlgo->digestSize, digest, signature,
-         signatureLen);
+         &privateKey, hashAlgo, hashAlgo, hashAlgo->digestSize, digest,
+         signature, signatureLen);
    }
 
    //Release previously allocated resources
@@ -659,16 +659,16 @@ error_t tlsGenerateEcdsaSignature(TlsContext *context, const uint8_t *digest,
 /**
  * @brief Generate Ed25519 signature
  * @param[in] context Pointer to the TLS context
- * @param[in] message Array of data chunks representing the message to be
+ * @param[in] messageFrags Array of fragments representing the message to be
  *   signed
- * @param[in] messageLen Number of data chunks representing the message
+ * @param[in] messageNumFrags Number of fragments representing the message
  * @param[out] signature Resulting signature
  * @param[out] signatureLen Length of the resulting signature
  * @return Error code
  **/
 
 error_t tlsGenerateEd25519Signature(TlsContext *context,
-   const DataChunk *message, uint_t messageLen, uint8_t *signature,
+   const DataFrag *messageFrags, uint_t messageNumFrags, uint8_t *signature,
    size_t *signatureLen)
 {
 #if (TLS_ED25519_SIGN_SUPPORT == ENABLED)
@@ -690,8 +690,8 @@ error_t tlsGenerateEd25519Signature(TlsContext *context,
       q = (privateKey.q.curve != NULL) ? privateKey.q.q : NULL;
 
       //Generate Ed25519 signature (PureEdDSA mode)
-      error = ed25519GenerateSignatureEx(privateKey.d, q, message, messageLen,
-         NULL, 0, 0, signature);
+      error = ed25519GenerateSignatureEx(privateKey.d, q, messageFrags,
+         messageNumFrags, NULL, 0, 0, signature);
 
       //Check status code
       if(!error)
@@ -721,16 +721,16 @@ error_t tlsGenerateEd25519Signature(TlsContext *context,
 /**
  * @brief Generate Ed448 signature
  * @param[in] context Pointer to the TLS context
- * @param[in] message Array of data chunks representing the message to be
+ * @param[in] messageFrags Array of fragments representing the message to be
  *   signed
- * @param[in] messageLen Number of data chunks representing the message
+ * @param[in] messageNumFrags Number of fragments representing the message
  * @param[out] signature Resulting signature
  * @param[out] signatureLen Length of the resulting signature
  * @return Error code
  **/
 
 error_t tlsGenerateEd448Signature(TlsContext *context,
-   const DataChunk *message, uint_t messageLen, uint8_t *signature,
+   const DataFrag *messageFrags, uint_t messageNumFrags, uint8_t *signature,
    size_t *signatureLen)
 {
 #if (TLS_ED448_SIGN_SUPPORT == ENABLED)
@@ -752,8 +752,8 @@ error_t tlsGenerateEd448Signature(TlsContext *context,
       q = (privateKey.q.curve != NULL) ? privateKey.q.q : NULL;
 
       //Generate Ed448 signature (PureEdDSA mode)
-      error = ed448GenerateSignatureEx(privateKey.d, q, message, messageLen,
-         NULL, 0, 0, signature);
+      error = ed448GenerateSignatureEx(privateKey.d, q, messageFrags,
+         messageNumFrags, NULL, 0, 0, signature);
 
       //Check status code
       if(!error)

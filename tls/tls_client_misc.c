@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.4
+ * @version 2.6.6
  **/
 
 //Switch to the appropriate trace level
@@ -1272,7 +1272,7 @@ __weak_func error_t tls12VerifyServerKeySignature(TlsContext *context,
                {
                   //Verify RSA signature (RSASSA-PSS signature scheme)
                   error = rsassaPssVerify(&context->peerRsaPublicKey, hashAlgo,
-                     hashAlgo->digestSize, digest, signature->value,
+                     hashAlgo, hashAlgo->digestSize, digest, signature->value,
                      ntohs(signature->length));
                }
                else
@@ -1295,7 +1295,7 @@ __weak_func error_t tls12VerifyServerKeySignature(TlsContext *context,
                {
                   //Verify RSA signature (RSASSA-PSS signature scheme)
                   error = rsassaPssVerify(&context->peerRsaPublicKey, hashAlgo,
-                     hashAlgo->digestSize, digest, signature->value,
+                     hashAlgo, hashAlgo->digestSize, digest, signature->value,
                      ntohs(signature->length));
                }
                else
@@ -1358,20 +1358,20 @@ __weak_func error_t tls12VerifyServerKeySignature(TlsContext *context,
    if(signScheme == TLS_SIGN_SCHEME_ED25519 &&
       context->peerCertType == TLS_CERT_ED25519_SIGN)
    {
-      DataChunk messageChunks[3];
+      DataFrag messageFrags[3];
 
       //Data to be verified is run through the EdDSA algorithm without
       //pre-hashing
-      messageChunks[0].buffer = context->clientRandom;
-      messageChunks[0].length = TLS_RANDOM_SIZE;
-      messageChunks[1].buffer = context->serverRandom;
-      messageChunks[1].length = TLS_RANDOM_SIZE;
-      messageChunks[2].buffer = params;
-      messageChunks[2].length = paramsLen;
+      messageFrags[0].buffer = context->clientRandom;
+      messageFrags[0].length = TLS_RANDOM_SIZE;
+      messageFrags[1].buffer = context->serverRandom;
+      messageFrags[1].length = TLS_RANDOM_SIZE;
+      messageFrags[2].buffer = params;
+      messageFrags[2].length = paramsLen;
 
       //Verify Ed25519 signature (PureEdDSA mode)
-      error = tlsVerifyEd25519Signature(context, messageChunks,
-         arraysize(messageChunks), signature->value, ntohs(signature->length));
+      error = tlsVerifyEd25519Signature(context, messageFrags,
+         arraysize(messageFrags), signature->value, ntohs(signature->length));
    }
    else
 #endif
@@ -1380,20 +1380,20 @@ __weak_func error_t tls12VerifyServerKeySignature(TlsContext *context,
    if(signScheme == TLS_SIGN_SCHEME_ED448 &&
       context->peerCertType == TLS_CERT_ED448_SIGN)
    {
-      DataChunk messageChunks[3];
+      DataFrag messageFrags[3];
 
       //Data to be verified is run through the EdDSA algorithm without
       //pre-hashing
-      messageChunks[0].buffer = context->clientRandom;
-      messageChunks[0].length = TLS_RANDOM_SIZE;
-      messageChunks[1].buffer = context->serverRandom;
-      messageChunks[1].length = TLS_RANDOM_SIZE;
-      messageChunks[2].buffer = params;
-      messageChunks[2].length = paramsLen;
+      messageFrags[0].buffer = context->clientRandom;
+      messageFrags[0].length = TLS_RANDOM_SIZE;
+      messageFrags[1].buffer = context->serverRandom;
+      messageFrags[1].length = TLS_RANDOM_SIZE;
+      messageFrags[2].buffer = params;
+      messageFrags[2].length = paramsLen;
 
       //Verify Ed448 signature (PureEdDSA mode)
-      error = tlsVerifyEd448Signature(context, messageChunks,
-         arraysize(messageChunks), signature->value, ntohs(signature->length));
+      error = tlsVerifyEd448Signature(context, messageFrags,
+         arraysize(messageFrags), signature->value, ntohs(signature->length));
    }
    else
 #endif

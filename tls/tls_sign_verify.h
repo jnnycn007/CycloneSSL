@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.4
+ * @version 2.6.6
  **/
 
 #ifndef _TLS_SIGN_VERIFY_H
@@ -58,12 +58,12 @@ error_t tlsVerifyEcdsaSignature(TlsContext *context, const uint8_t *digest,
    size_t digestLen, const uint8_t *signature, size_t signatureLen);
 
 error_t tlsVerifyEd25519Signature(TlsContext *context,
-   const DataChunk *message, uint_t messageLen, const uint8_t *signature,
-   size_t signatureLen);
+   const DataFrag *messageFrags, uint_t messageNumFrags,
+   const uint8_t *signature, size_t signatureLen);
 
 error_t tlsVerifyEd448Signature(TlsContext *context,
-   const DataChunk *message, uint_t messageLen, const uint8_t *signature,
-   size_t signatureLen);
+   const DataFrag *messageFrags, uint_t messageNumFrags,
+   const uint8_t *signature, size_t signatureLen);
 
 //C++ guard
 #ifdef __cplusplus

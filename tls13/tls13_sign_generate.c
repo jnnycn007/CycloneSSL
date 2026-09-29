@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.4
+ * @version 2.6.6
  **/
 
 //Switch to the appropriate trace level
@@ -448,15 +448,15 @@ error_t tls13GenerateEd25519Signature(TlsContext *context, const uint8_t *messag
 #if (TLS_ED25519_SIGN_SUPPORT == ENABLED)
    error_t error;
    size_t n;
-   DataChunk messageChunks[1];
+   DataFrag messageFrags[1];
 
    //Data to be signed is run through the EdDSA algorithm without pre-hashing
-   messageChunks[0].buffer = message;
-   messageChunks[0].length = length;
+   messageFrags[0].buffer = message;
+   messageFrags[0].length = length;
 
    //Generate Ed25519 signature in PureEdDSA mode
-   error = tlsGenerateEd25519Signature(context, messageChunks,
-      arraysize(messageChunks), signature->value, &n);
+   error = tlsGenerateEd25519Signature(context, messageFrags,
+      arraysize(messageFrags), signature->value, &n);
 
    //Check status code
    if(!error)
@@ -489,15 +489,15 @@ error_t tls13GenerateEd448Signature(TlsContext *context, const uint8_t *message,
 #if (TLS_ED448_SIGN_SUPPORT == ENABLED)
    error_t error;
    size_t n;
-   DataChunk messageChunks[1];
+   DataFrag messageFrags[1];
 
    //Data to be signed is run through the EdDSA algorithm without pre-hashing
-   messageChunks[0].buffer = message;
-   messageChunks[0].length = length;
+   messageFrags[0].buffer = message;
+   messageFrags[0].length = length;
 
    //Generate Ed448 signature in PureEdDSA mode
-   error = tlsGenerateEd448Signature(context, messageChunks,
-      arraysize(messageChunks), signature->value, &n);
+   error = tlsGenerateEd448Signature(context, messageFrags,
+      arraysize(messageFrags), signature->value, &n);
 
    //Check status code
    if(!error)

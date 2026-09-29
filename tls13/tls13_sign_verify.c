@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.4
+ * @version 2.6.6
  **/
 
 //Switch to the appropriate trace level
@@ -312,7 +312,7 @@ error_t tls13VerifyRsaPssSignature(TlsContext *context, const uint8_t *message,
    if(!error)
    {
       //Verify RSASSA-PSS signature
-      error = rsassaPssVerify(&context->peerRsaPublicKey, hashAlgo,
+      error = rsassaPssVerify(&context->peerRsaPublicKey, hashAlgo, hashAlgo,
          hashAlgo->digestSize, context->clientVerifyData, signature->value,
          ntohs(signature->length));
    }
@@ -504,19 +504,19 @@ error_t tls13VerifyEd25519Signature(TlsContext *context, const uint8_t *message,
 {
 #if (TLS_ED25519_SIGN_SUPPORT == ENABLED)
    error_t error;
-   DataChunk messageChunks[1];
+   DataFrag messageFrags[1];
 
    //The signature algorithm must be compatible with the key in the sender's
    //end-entity certificate (refer to RFC 8446, section 4.4.3)
    if(context->peerCertType == TLS_CERT_ED25519_SIGN)
    {
       //Data to be verified is run through the EdDSA algorithm without pre-hashing
-      messageChunks[0].buffer = message;
-      messageChunks[0].length = length;
+      messageFrags[0].buffer = message;
+      messageFrags[0].length = length;
 
       //Verify Ed25519 signature (PureEdDSA mode)
-      error = tlsVerifyEd25519Signature(context, messageChunks,
-         arraysize(messageChunks), signature->value, ntohs(signature->length));
+      error = tlsVerifyEd25519Signature(context, messageFrags,
+         arraysize(messageFrags), signature->value, ntohs(signature->length));
    }
    else
    {
@@ -547,19 +547,19 @@ error_t tls13VerifyEd448Signature(TlsContext *context, const uint8_t *message,
 {
 #if (TLS_ED448_SIGN_SUPPORT == ENABLED)
    error_t error;
-   DataChunk messageChunks[1];
+   DataFrag messageFrags[1];
 
    //The signature algorithm must be compatible with the key in the sender's
    //end-entity certificate (refer to RFC 8446, section 4.4.3)
    if(context->peerCertType == TLS_CERT_ED448_SIGN)
    {
       //Data to be verified is run through the EdDSA algorithm without pre-hashing
-      messageChunks[0].buffer = message;
-      messageChunks[0].length = length;
+      messageFrags[0].buffer = message;
+      messageFrags[0].length = length;
 
       //Verify Ed448 signature (PureEdDSA mode)
-      error = tlsVerifyEd448Signature(context, messageChunks,
-         arraysize(messageChunks), signature->value, ntohs(signature->length));
+      error = tlsVerifyEd448Signature(context, messageFrags,
+         arraysize(messageFrags), signature->value, ntohs(signature->length));
    }
    else
    {

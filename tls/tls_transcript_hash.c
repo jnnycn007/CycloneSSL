@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.4
+ * @version 2.6.6
  **/
 
 //Switch to the appropriate trace level
@@ -34,9 +34,9 @@
 //Dependencies
 #include "tls/tls.h"
 #include "tls/tls_client.h"
-#include "tls/tls_key_material.h"
 #include "tls/tls_transcript_hash.h"
 #include "tls13/tls13_key_material.h"
+#include "kdf/tls_kdf.h"
 #include "debug.h"
 
 //Check TLS library configuration

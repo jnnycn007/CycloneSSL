@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.4
+ * @version 2.6.6
  **/
 
 //Switch to the appropriate trace level
@@ -40,6 +40,7 @@
 #include "tls13/tls13_ticket.h"
 #include "quic/tls_quic_misc.h"
 #include "kdf/hkdf.h"
+#include "kdf/tls_kdf.h"
 #include "debug.h"
 
 //Check TLS library configuration
@@ -65,79 +66,29 @@ error_t tls13HkdfExpandLabel(TlsTransportProtocol transportProtocol,
    const char_t *label, const uint8_t *context, size_t contextLen,
    uint8_t *output, size_t outputLen)
 {
-   error_t error;
-   size_t n;
-   size_t labelLen;
-   uint8_t *hkdfLabel;
    const char_t *prefix;
 
-   //Check parameters
-   if(label == NULL)
-      return ERROR_INVALID_PARAMETER;
-   if(context == NULL && contextLen != 0)
-      return ERROR_INVALID_PARAMETER;
-
-   //Retrieve the length of the label
-   labelLen = osStrlen(label);
-
-   //Check parameters
-   if(labelLen > (255 - 6) || contextLen > 255)
-      return ERROR_INVALID_LENGTH;
-
-   //Compute the length of the HkdfLabel structure
-   n = labelLen + contextLen + 10;
-   //Allocate a memory buffer to hold the HkdfLabel structure
-   hkdfLabel = tlsAllocMem(n);
-
-   //Successful memory allocation?
-   if(hkdfLabel != NULL)
-   {
 #if (DTLS_SUPPORT == ENABLED)
-      //DTLS protocol?
-      if(transportProtocol == TLS_TRANSPORT_PROTOCOL_DATAGRAM)
-      {
-         //For DTLS 1.3, the label prefix shall be "dtls13". This ensures key
-         //separation between DTLS 1.3 and TLS 1.3. Note that there is no
-         //trailing space (refer to RFC 9147, section 5.9)
-         prefix = "dtls13";
-      }
-      else
-#endif
-      //TLS protocol?
-      {
-         //For TLS 1.3, the label prefix shall be "tls13 " (refer to RFC 8446,
-         //section 7.1)
-         prefix = "tls13 ";
-      }
-
-      //Format the HkdfLabel structure
-      hkdfLabel[0] = MSB(outputLen);
-      hkdfLabel[1] = LSB(outputLen);
-      hkdfLabel[2] = (uint8_t) (labelLen + 6);
-      osMemcpy(hkdfLabel + 3, prefix, 6);
-      osMemcpy(hkdfLabel + 9, label, labelLen);
-      hkdfLabel[labelLen + 9] = (uint8_t) contextLen;
-      osMemcpy(hkdfLabel + labelLen + 10, context, contextLen);
-
-      //Debug message
-      TRACE_DEBUG("HkdfLabel (%" PRIuSIZE " bytes):\r\n", n);
-      TRACE_DEBUG_ARRAY("  ", hkdfLabel, n);
-
-      //Compute HKDF-Expand(Secret, HkdfLabel, Length)
-      error = hkdfExpand(hash, secret, secretLen, hkdfLabel, n, output,
-         outputLen);
-
-      //Release previously allocated memory
-      tlsFreeMem(hkdfLabel);
+   //DTLS protocol?
+   if(transportProtocol == TLS_TRANSPORT_PROTOCOL_DATAGRAM)
+   {
+      //For DTLS 1.3, the label prefix shall be "dtls13". This ensures key
+      //separation between DTLS 1.3 and TLS 1.3. Note that there is no trailing
+      //space (refer to RFC 9147, section 5.9)
+      prefix = "dtls13";
    }
    else
+#endif
+   //TLS protocol?
    {
-      //Failed to allocate memory
-      error = ERROR_OUT_OF_MEMORY;
+      //For TLS 1.3, the label prefix shall be "tls13 " (refer to RFC 8446,
+      //section 7.1)
+      prefix = "tls13 ";
    }
 
-   //Return status code
-   return error;
+   //Compute HKDF-Expand-Label(Secret, Label, Context, Length)
+   return hkdfExpandLabel(hash, secret, secretLen, prefix, label, context,
+      contextLen, output, outputLen);
 }
 
 

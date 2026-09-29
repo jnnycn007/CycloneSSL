@@ -31,7 +31,7 @@
  * is designed to prevent eavesdropping, tampering, or message forgery
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.4
+ * @version 2.6.6
  **/
 
 //Switch to the appropriate trace level
@@ -462,30 +462,38 @@ error_t tlsFormatClientHello(TlsContext *context,
    //Point to the next field
    p += n;
 
-   //Include the SignatureAlgorithms extension only if TLS 1.2 is supported
-   error = tlsFormatSignAlgosExtension(context, p, &n);
-   //Any error to report?
-   if(error)
-      return error;
+   //Check whether the client supports certificate-based authentication
+   if((context->cipherSuiteTypes & TLS_CIPHER_SUITE_TYPE_RSA) != 0 ||
+      (context->cipherSuiteTypes & TLS_CIPHER_SUITE_TYPE_ECDSA) != 0 ||
+      (context->cipherSuiteTypes & TLS_CIPHER_SUITE_TYPE_DSA) != 0 ||
+      (context->cipherSuiteTypes & TLS_CIPHER_SUITE_TYPE_TLS13) != 0 ||
+      (context->cipherSuiteTypes & TLS_CIPHER_SUITE_TYPE_SM) != 0)
+   {
+      //Include the SignatureAlgorithms extension only if TLS 1.2 is supported
+      error = tlsFormatSignAlgosExtension(context, p, &n);
+      //Any error to report?
+      if(error)
+         return error;
 
-   //Fix the length of the extension list
-   extensionList->length += (uint16_t) n;
-   //Point to the next field
-   p += n;
+      //Fix the length of the extension list
+      extensionList->length += (uint16_t) n;
+      //Point to the next field
+      p += n;
 
 #if (TLS_SIGN_ALGOS_CERT_SUPPORT == ENABLED)
-   //The SignatureAlgorithmsCert extension allows a client to indicate which
-   //signature algorithms it can validate in X.509 certificates
-   error = tlsFormatSignAlgosCertExtension(context, p, &n);
-   //Any error to report?
-   if(error)
-      return error;
+      //The SignatureAlgorithmsCert extension allows a client to indicate which
+      //signature algorithms it can validate in X.509 certificates
+      error = tlsFormatSignAlgosCertExtension(context, p, &n);
+      //Any error to report?
+      if(error)
+         return error;
 
-   //Fix the length of the extension list
-   extensionList->length += (uint16_t) n;
-   //Point to the next field
-   p += n;
+      //Fix the length of the extension list
+      extensionList->length += (uint16_t) n;
+      //Point to the next field
+      p += n;
 #endif
+   }
 
 #if (TLS_ALPN_SUPPORT == ENABLED)
    //The ALPN extension contains the list of protocols advertised by the

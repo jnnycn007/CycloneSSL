@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.4
+ * @version 2.6.6
  **/
 
 //Switch to the appropriate trace level
@@ -1295,17 +1295,17 @@ bool_t tlsIsCertSignAlgoSupported(uint16_t signScheme)
    }
    else if(signScheme == TLS_SIGN_SCHEME_MLDSA44)
    {
-      //ML-DSA-44 signature algorithm 
+      //ML-DSA-44 signature algorithm
       acceptable = x509IsSignAlgoSupported(X509_SIGN_ALGO_MLDSA44);
    }
    else if(signScheme == TLS_SIGN_SCHEME_MLDSA65)
    {
-      //ML-DSA-65 signature algorithm 
+      //ML-DSA-65 signature algorithm
       acceptable = x509IsSignAlgoSupported(X509_SIGN_ALGO_MLDSA65);
    }
    else if(signScheme == TLS_SIGN_SCHEME_MLDSA87)
    {
-      //ML-DSA-87 signature algorithm 
+      //ML-DSA-87 signature algorithm
       acceptable = x509IsSignAlgoSupported(X509_SIGN_ALGO_MLDSA87);
    }
    else

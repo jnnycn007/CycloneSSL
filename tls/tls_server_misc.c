@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.4
+ * @version 2.6.6
  **/
 
 //Switch to the appropriate trace level
@@ -668,19 +668,19 @@ error_t tls12GenerateServerKeySignature(TlsContext *context,
    //Ed25519 signature scheme?
    if(context->signScheme == TLS_SIGN_SCHEME_ED25519)
    {
-      DataChunk messageChunks[3];
+      DataFrag messageFrags[3];
 
       //Data to be signed is run through the EdDSA algorithm without pre-hashing
-      messageChunks[0].buffer = context->clientRandom;
-      messageChunks[0].length = TLS_RANDOM_SIZE;
-      messageChunks[1].buffer = context->serverRandom;
-      messageChunks[1].length = TLS_RANDOM_SIZE;
-      messageChunks[2].buffer = params;
-      messageChunks[2].length = paramsLen;
+      messageFrags[0].buffer = context->clientRandom;
+      messageFrags[0].length = TLS_RANDOM_SIZE;
+      messageFrags[1].buffer = context->serverRandom;
+      messageFrags[1].length = TLS_RANDOM_SIZE;
+      messageFrags[2].buffer = params;
+      messageFrags[2].length = paramsLen;
 
       //Sign the key exchange parameters using Ed25519
-      error = tlsGenerateEd25519Signature(context, messageChunks,
-         arraysize(messageChunks), signature->value, written);
+      error = tlsGenerateEd25519Signature(context, messageFrags,
+         arraysize(messageFrags), signature->value, written);
    }
    else
 #endif
@@ -688,19 +688,19 @@ error_t tls12GenerateServerKeySignature(TlsContext *context,
    //Ed448 signature scheme?
    if(context->signScheme == TLS_SIGN_SCHEME_ED448)
    {
-      DataChunk messageChunks[3];
+      DataFrag messageFrags[3];
 
       //Data to be signed is run through the EdDSA algorithm without pre-hashing
-      messageChunks[0].buffer = context->clientRandom;
-      messageChunks[0].length = TLS_RANDOM_SIZE;
-      messageChunks[1].buffer = context->serverRandom;
-      messageChunks[1].length = TLS_RANDOM_SIZE;
-      messageChunks[2].buffer = params;
-      messageChunks[2].length = paramsLen;
+      messageFrags[0].buffer = context->clientRandom;
+      messageFrags[0].length = TLS_RANDOM_SIZE;
+      messageFrags[1].buffer = context->serverRandom;
+      messageFrags[1].length = TLS_RANDOM_SIZE;
+      messageFrags[2].buffer = params;
+      messageFrags[2].length = paramsLen;
 
       //Sign the key exchange parameters using Ed448
-      error = tlsGenerateEd448Signature(context, messageChunks,
-         arraysize(messageChunks), signature->value, written);
+      error = tlsGenerateEd448Signature(context, messageFrags,
+         arraysize(messageFrags), signature->value, written);
    }
    else
 #endif

@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.4
+ * @version 2.6.6
  **/
 
 #ifndef _TLS_KEY_MATERIAL_H
@@ -45,13 +45,6 @@ error_t tlsGenerateMasterSecret(TlsContext *context);
 error_t tlsGenerateExtendedMasterSecret(TlsContext *context);
 error_t tlsGeneratePskPremasterSecret(TlsContext *context);
 error_t tlsGenerateKeyBlock(TlsContext *context, size_t keyBlockLen);
-
-error_t tlsPrf(const uint8_t *secret, size_t secretLen, const char_t *label,
-   const uint8_t *seed, size_t seedLen, uint8_t *output, size_t outputLen);
-
-error_t tls12Prf(const HashAlgo *hash, const uint8_t *secret, size_t secretLen,
-   const char_t *label, const uint8_t *seed, size_t seedLen, uint8_t *output,
-   size_t outputLen);
 
 void tlsDumpSecret(TlsContext *context, const char_t *label,
    const uint8_t *secret, size_t secretLen);

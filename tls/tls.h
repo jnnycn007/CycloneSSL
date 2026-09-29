@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.4
+ * @version 2.6.6
  **/
 
 #ifndef _TLS_H
@@ -42,6 +42,7 @@ struct _TlsEncryptionEngine;
 //Dependencies
 #include "core/crypto.h"
 #include "mac/hmac.h"
+#include "cipher_modes/cipher_modes.h"
 #include "aead/aead_algorithms.h"
 #include "pkc/key_exch_algorithms.h"
 #include "pkc/rsa.h"
@@ -82,13 +83,13 @@ struct _TlsEncryptionEngine;
 #endif
 
 //Version string
-#define CYCLONE_SSL_VERSION_STRING "2.6.4"
+#define CYCLONE_SSL_VERSION_STRING "2.6.6"
 //Major version
 #define CYCLONE_SSL_MAJOR_VERSION 2
 //Minor version
 #define CYCLONE_SSL_MINOR_VERSION 6
 //Revision number
-#define CYCLONE_SSL_REV_NUMBER 4
+#define CYCLONE_SSL_REV_NUMBER 6
 
 //TLS version numbers
 #define SSL_VERSION_3_0 0x0300
@@ -288,14 +289,14 @@ struct _TlsEncryptionEngine;
 
 //RSA key exchange support
 #ifndef TLS_RSA_KE_SUPPORT
-   #define TLS_RSA_KE_SUPPORT ENABLED
+   #define TLS_RSA_KE_SUPPORT DISABLED
 #elif (TLS_RSA_KE_SUPPORT != ENABLED && TLS_RSA_KE_SUPPORT != DISABLED)
    #error TLS_RSA_KE_SUPPORT parameter is not valid
 #endif
 
 //DHE_RSA key exchange support
 #ifndef TLS_DHE_RSA_KE_SUPPORT
-   #define TLS_DHE_RSA_KE_SUPPORT ENABLED
+   #define TLS_DHE_RSA_KE_SUPPORT DISABLED
 #elif (TLS_DHE_RSA_KE_SUPPORT != ENABLED && TLS_DHE_RSA_KE_SUPPORT != DISABLED)
    #error TLS_DHE_RSA_KE_SUPPORT parameter is not valid
 #endif
@@ -814,7 +815,7 @@ struct _TlsEncryptionEngine;
 //Minimum acceptable size for Diffie-Hellman prime modulus
 #ifndef TLS_MIN_DH_MODULUS_SIZE
    #define TLS_MIN_DH_MODULUS_SIZE 2048
-#elif (TLS_MIN_DH_MODULUS_SIZE < 512)
+#elif (TLS_MIN_DH_MODULUS_SIZE < 1024)
    #error TLS_MIN_DH_MODULUS_SIZE parameter is not valid
 #endif
 
@@ -828,7 +829,7 @@ struct _TlsEncryptionEngine;
 //Minimum acceptable size for RSA modulus
 #ifndef TLS_MIN_RSA_MODULUS_SIZE
    #define TLS_MIN_RSA_MODULUS_SIZE 2048
-#elif (TLS_MIN_RSA_MODULUS_SIZE < 512)
+#elif (TLS_MIN_RSA_MODULUS_SIZE < 1024)
    #error TLS_MIN_RSA_MODULUS_SIZE parameter is not valid
 #endif
 
@@ -842,7 +843,7 @@ struct _TlsEncryptionEngine;
 //Minimum acceptable size for DSA prime modulus
 #ifndef TLS_MIN_DSA_MODULUS_SIZE
    #define TLS_MIN_DSA_MODULUS_SIZE 2048
-#elif (TLS_MIN_DSA_MODULUS_SIZE < 512)
+#elif (TLS_MIN_DSA_MODULUS_SIZE < 1024)
    #error TLS_MIN_DSA_MODULUS_SIZE parameter is not valid
 #endif
 
@@ -896,8 +897,8 @@ struct _TlsEncryptionEngine;
 #endif
 
 //Application specific context (TLS context)
-#ifndef TLS_PRIVATE_CONTEXT
-   #define TLS_PRIVATE_CONTEXT
+#ifndef TLS_CONTEXT_PRIVATE
+   #define TLS_CONTEXT_PRIVATE
 #endif
 
 //Application specific context (encryption engine)
@@ -1541,9 +1542,9 @@ typedef enum
    TLS_GROUP_MLKEM512                   = 512,   //Draft
    TLS_GROUP_MLKEM768                   = 513,   //Draft
    TLS_GROUP_MLKEM1024                  = 514,   //Draft
-   TLS_GROUP_SECP256R1_MLKEM768         = 4587,  //Draft
-   TLS_GROUP_X25519_MLKEM768            = 4588,  //Draft
-   TLS_GROUP_SECP384R1_MLKEM1024        = 4589,  //Draft
+   TLS_GROUP_SECP256R1_MLKEM768         = 4587,  //RFC 10024
+   TLS_GROUP_X25519_MLKEM768            = 4588,  //RFC 10024
+   TLS_GROUP_SECP384R1_MLKEM1024        = 4589,  //RFC 10024
    TLS_GROUP_CURVE_SM2_MLKEM768         = 4590,  //Draft
    TLS_GROUP_EXPLICIT_PRIME_CURVE       = 65281, //RFC 4492
    TLS_GROUP_EXPLICIT_CHAR2_CURVE       = 65282  //RFC 4492
@@ -2738,7 +2739,7 @@ struct _TlsContext
    size_t remoteQuicTransportParamsLen;      ///<Length of the remote QUIC transport parameters
 #endif
 
-   TLS_PRIVATE_CONTEXT                       ///<Application specific context
+   TLS_CONTEXT_PRIVATE                       ///<Application specific context
 };
 
 

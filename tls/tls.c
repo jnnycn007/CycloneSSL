@@ -31,7 +31,7 @@
  * is designed to prevent eavesdropping, tampering, or message forgery
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.4
+ * @version 2.6.6
  **/
 
 //Switch to the appropriate trace level
@@ -43,7 +43,6 @@
 #include "tls/tls_handshake.h"
 #include "tls/tls_common.h"
 #include "tls/tls_certificate.h"
-#include "tls/tls_key_material.h"
 #include "tls/tls_transcript_hash.h"
 #include "tls/tls_record.h"
 #include "tls/tls_misc.h"
@@ -52,6 +51,7 @@
 #include "tls13/tls13_ticket.h"
 #include "dtls/dtls_record.h"
 #include "dtls13/dtls13_misc.h"
+#include "kdf/tls_kdf.h"
 #include "pkix/pem_import.h"
 #include "pkix/x509_cert_parse.h"
 #include "debug.h"

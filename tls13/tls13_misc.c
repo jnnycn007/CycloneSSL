@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.4
+ * @version 2.6.6
  **/
 
 //Switch to the appropriate trace level
@@ -558,9 +558,10 @@ error_t tls13Encapsulate(TlsContext *context, uint16_t namedGroup,
             kemFree(&context->kemContext);
             kemInit(&context->kemContext, kemAlgo);
 
-            //NIST's special publication 800-56C approves the usage of HKDF with two
-            //distinct shared secrets, with the condition that the first one is
-            //computed by a FIPS-approved key-establishment scheme
+            //The group name X25519MLKEM768 does not adhere to the naming
+            //convention outlined in Section 3.2 of RFC 9954. Specifically, the
+            //order of shares in the concatenation has been reversed. This is
+            //due to historical reasons (refer to RFC 10024, section 4.1)
             if(context->namedGroup == TLS_GROUP_X25519_MLKEM768)
             {
                keyShareOffset = kemAlgo->publicKeySize;
@@ -710,9 +711,10 @@ error_t tls13Decapsulate(TlsContext *context, const uint8_t *keyShare,
       //key share and the ct outputs of the KEM Encaps algorithm
       if(length > kemAlgo->ciphertextSize)
       {
-         //NIST's special publication 800-56C approves the usage of HKDF with two
-         //distinct shared secrets, with the condition that the first one is
-         //computed by a FIPS-approved key-establishment scheme
+         //The group name X25519MLKEM768 does not adhere to the naming
+         //convention outlined in Section 3.2 of RFC 9954. Specifically, the
+         //order of shares in the concatenation has been reversed. This is due
+         //to historical reasons (refer to RFC 10024, section 4.1)
          if(context->namedGroup == TLS_GROUP_X25519_MLKEM768)
          {
             keyShareOffset = kemAlgo->ciphertextSize;

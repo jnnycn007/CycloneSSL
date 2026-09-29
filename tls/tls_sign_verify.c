@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.4
+ * @version 2.6.6
  **/
 
 //Switch to the appropriate trace level
@@ -266,7 +266,7 @@ error_t tls12VerifySignature(TlsContext *context, const uint8_t *p,
          {
             //Verify RSA signature (RSASSA-PSS signature scheme)
             error = rsassaPssVerify(&context->peerRsaPublicKey, hashAlgo,
-               hashAlgo->digestSize, context->clientVerifyData,
+               hashAlgo, hashAlgo->digestSize, context->clientVerifyData,
                signature->value, ntohs(signature->length));
          }
          else
@@ -289,7 +289,7 @@ error_t tls12VerifySignature(TlsContext *context, const uint8_t *p,
          {
             //Verify RSA signature (RSASSA-PSS signature scheme)
             error = rsassaPssVerify(&context->peerRsaPublicKey, hashAlgo,
-               hashAlgo->digestSize, context->clientVerifyData,
+               hashAlgo, hashAlgo->digestSize, context->clientVerifyData,
                signature->value, ntohs(signature->length));
          }
          else
@@ -611,17 +611,17 @@ error_t tlsVerifyEcdsaSignature(TlsContext *context, const uint8_t *digest,
 /**
  * @brief Verify Ed25519 signature
  * @param[in] context Pointer to the TLS context
- * @param[in] message Array of data chunks representing the message whose
+ * @param[in] messageFrags Array of fragment representing the message whose
  *   signature is to be verified
- * @param[in] messageLen Number of data chunks representing the message
+ * @param[in] messageNumFrags Number of fragments representing the message
  * @param[in] signature Signature to be verified
  * @param[in] signatureLen Length of the signature to be verified
  * @return Error code
  **/
 
 error_t tlsVerifyEd25519Signature(TlsContext *context,
-   const DataChunk *message, uint_t messageLen, const uint8_t *signature,
-   size_t signatureLen)
+   const DataFrag *messageFrags, uint_t messageNumFrags,
+   const uint8_t *signature, size_t signatureLen)
 {
 #if (TLS_ED25519_SIGN_SUPPORT == ENABLED)
    error_t error;
@@ -634,7 +634,7 @@ error_t tlsVerifyEd25519Signature(TlsContext *context,
       {
          //Verify Ed25519 signature (PureEdDSA mode)
          error = ed25519VerifySignatureEx(context->peerEddsaPublicKey.q,
-            message, messageLen, NULL, 0, 0, signature);
+            messageFrags, messageNumFrags, NULL, 0, 0, signature);
       }
       else
       {
@@ -660,17 +660,17 @@ error_t tlsVerifyEd25519Signature(TlsContext *context,
 /**
  * @brief Verify Ed448 signature
  * @param[in] context Pointer to the TLS context
- * @param[in] message Array of data chunks representing the message whose
+ * @param[in] messageFrags Array of fragment representing the message whose
  *   signature is to be verified
- * @param[in] messageLen Number of data chunks representing the message
+ * @param[in] messageNumFrags Number of fragments representing the message
  * @param[in] signature Signature to be verified
  * @param[in] signatureLen Length of the signature to be verified
  * @return Error code
  **/
 
 error_t tlsVerifyEd448Signature(TlsContext *context,
-   const DataChunk *message, uint_t messageLen, const uint8_t *signature,
-   size_t signatureLen)
+   const DataFrag *messageFrags, uint_t messageNumFrags,
+   const uint8_t *signature, size_t signatureLen)
 {
 #if (TLS_ED448_SIGN_SUPPORT == ENABLED)
    error_t error;
@@ -682,8 +682,8 @@ error_t tlsVerifyEd448Signature(TlsContext *context,
       if(signatureLen == ED448_SIGNATURE_LEN)
       {
          //Verify Ed448 signature (PureEdDSA mode)
-         error = ed448VerifySignatureEx(context->peerEddsaPublicKey.q, message,
-            messageLen, NULL, 0, 0, signature);
+         error = ed448VerifySignatureEx(context->peerEddsaPublicKey.q,
+            messageFrags, messageNumFrags, NULL, 0, 0, signature);
       }
       else
       {
